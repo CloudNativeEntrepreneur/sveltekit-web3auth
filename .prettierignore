@@ -1,0 +1,15 @@
+.svelte-kit/**
+static/**
+build/**
+node_modules/**
+.husky/**
+.lighthouse/**
+charts/**
+preview/**
+src/lib/env.js
+coverage/**
+src/stories/Introduction.stories.mdx
+.storybook/package.json
+docker-compose.yml
+.github/**
+storybook-static/**

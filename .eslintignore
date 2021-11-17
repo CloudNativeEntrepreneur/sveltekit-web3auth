@@ -1,0 +1,10 @@
+.svelte-kit/**
+static/**
+build/**
+node_modules/**
+.husky/**
+.lighthouse/**
+charts/**
+preview/**
+.gitignore
+src/lib/env.js

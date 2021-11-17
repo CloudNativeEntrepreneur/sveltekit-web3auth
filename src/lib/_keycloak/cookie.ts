@@ -13,8 +13,8 @@ var pairSplitRegExp = /; */;
 const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 
 export const parseCookie = (str: string, options?: any) => {
-  if (typeof str !== 'string') {
-    throw new TypeError('argument str must be a string');
+  if (typeof str !== "string") {
+    throw new TypeError("argument str must be a string");
   }
 
   var obj = {};
@@ -24,14 +24,14 @@ export const parseCookie = (str: string, options?: any) => {
 
   for (var i = 0; i < pairs.length; i++) {
     var pair = pairs[i];
-    var eq_idx = pair.indexOf('=');
+    var eq_idx = pair.indexOf("=");
 
     // skip things that don't look like key=value
     if (eq_idx < 0) {
       continue;
     }
 
-    var key = pair.substr(0, eq_idx).trim()
+    var key = pair.substr(0, eq_idx).trim();
     var val = pair.substr(++eq_idx, pair.length).trim();
 
     // quoted values
@@ -46,7 +46,7 @@ export const parseCookie = (str: string, options?: any) => {
   }
 
   return obj;
-}
+};
 
 /**
  * Try decoding a string using a decoding function.
