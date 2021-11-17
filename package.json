@@ -2,8 +2,8 @@
 	"name": "sveltekit-oidc",
 	"version": "0.0.8",
 	"scripts": {
-		"dev": "svelte-kit dev",
-		"build": "svelte-kit build",
+		"dev": "VITE_OIDC_CLIENT_SECRET=$(kubectl get secret -n auth keycloak-client-secret-local-public -o 'jsonpath={.data.CLIENT_SECRET}' | base64 -D) svelte-kit dev",
+		"build": "VITE_OIDC_CLIENT_SECRET=$(kubectl get secret -n auth keycloak-client-secret-local-public -o 'jsonpath={.data.CLIENT_SECRET}' | base64 -D) svelte-kit build",
 		"package": "svelte-kit package",
 		"preview": "svelte-kit preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
