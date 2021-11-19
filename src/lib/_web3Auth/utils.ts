@@ -1,19 +1,17 @@
 import type { LoadOutput } from "@sveltejs/kit";
 import type {
   Locals,
-  OIDCFailureResponse,
-  OIDCResponse,
+  Web3AuthFailureResponse,
+  Web3AuthResponse,
   UserDetailsGeneratorFn,
   GetUserSessionFn,
 } from "../types";
 import { parseCookie } from "./cookie";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
-export const oidcBaseUrl = `${
-  import.meta.env.VITE_OIDC_ISSUER
-}/protocol/openid-connect`;
-export const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
-let appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
+export const web3AuthBaseUrl = `${import.meta.env.VITE_WEB3_AUTH_ISSUER}`;
+export const clientId = `${import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}`;
+let appRedirectUrl = import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI;
 
 export function isTokenExpired(jwt: string): boolean {
   let data = null;
@@ -33,17 +31,17 @@ export function isTokenExpired(jwt: string): boolean {
     : true;
 }
 
-export function initiateFrontChannelOIDCAuth(
+export function initiateFrontChannelWeb3Auth(
   browser: boolean,
-  oidcBaseUrl: string,
+  web3AuthBaseUrl: string,
   clientId: string,
   client_scopes: string,
   appRedirectUrl: string,
   request_path?: string,
   request_params?: Record<string, string>
 ): LoadOutput {
-  const oidcRedirectUrlWithParams = [
-    `${oidcBaseUrl}/auth?scope=${
+  const web3AuthRedirectUrlWithParams = [
+    `${web3AuthBaseUrl}/auth?scope=${
       browser ? encodeURIComponent(client_scopes) : client_scopes
     }`,
     `client_id=${clientId}`,
@@ -58,18 +56,18 @@ export function initiateFrontChannelOIDCAuth(
     "response_mode=query",
   ];
   return {
-    redirect: oidcRedirectUrlWithParams.join("&"),
+    redirect: web3AuthRedirectUrlWithParams.join("&"),
     status: 302,
   };
 }
 
-export async function initiateBackChannelOIDCAuth(
+export async function initiateBackChannelWeb3Auth(
   authCode: string,
   clientId: string,
   clientSecret: string,
-  oidcBaseUrl: string,
+  web3AuthBaseUrl: string,
   appRedirectUrl: string
-): Promise<OIDCResponse> {
+): Promise<Web3AuthResponse> {
   let formBody = [
     "code=" + authCode,
     "client_id=" + clientId,
@@ -79,7 +77,7 @@ export async function initiateBackChannelOIDCAuth(
   ];
 
   if (!authCode) {
-    const error_data: OIDCResponse = {
+    const error_data: Web3AuthResponse = {
       error: "invalid_code",
       error_description: "Invalid code",
       access_token: null,
@@ -89,7 +87,7 @@ export async function initiateBackChannelOIDCAuth(
     return error_data;
   }
 
-  const res = await fetch(`${oidcBaseUrl}/token`, {
+  const res = await fetch(`${web3AuthBaseUrl}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -98,10 +96,10 @@ export async function initiateBackChannelOIDCAuth(
   });
 
   if (res.ok) {
-    const data: OIDCResponse = await res.json();
+    const data: Web3AuthResponse = await res.json();
     return data;
   } else {
-    const data: OIDCResponse = await res.json();
+    const data: Web3AuthResponse = await res.json();
     console.log("response not ok");
     console.log(data);
     console.log(formBody.join("&"));
@@ -109,13 +107,13 @@ export async function initiateBackChannelOIDCAuth(
   }
 }
 
-export async function initiateBackChannelOIDCLogout(
+export async function initiateBackChannelWeb3AuthLogout(
   access_token: string,
   clientId: string,
   clientSecret: string,
-  oidcBaseUrl: string,
+  web3AuthBaseUrl: string,
   refresh_token: string
-): Promise<OIDCFailureResponse> {
+): Promise<Web3AuthFailureResponse> {
   let formBody = [
     "client_id=" + clientId,
     "client_secret=" + clientSecret,
@@ -130,7 +128,7 @@ export async function initiateBackChannelOIDCLogout(
     return error_data;
   }
 
-  const res = await fetch(`${oidcBaseUrl}/logout`, {
+  const res = await fetch(`${web3AuthBaseUrl}/logout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -145,7 +143,7 @@ export async function initiateBackChannelOIDCLogout(
       error_description: null,
     };
   } else {
-    const error_data: OIDCResponse = await res.json();
+    const error_data: Web3AuthResponse = await res.json();
     console.log("logout response not ok");
     console.log(error_data);
     console.log(formBody.join("&"));
@@ -153,12 +151,12 @@ export async function initiateBackChannelOIDCLogout(
   }
 }
 
-export async function renewOIDCToken(
+export async function renewWeb3AuthToken(
   refresh_token: string,
-  oidcBaseUrl: string,
+  web3AuthBaseUrl: string,
   clientId: string,
   clientSecret: string
-): Promise<OIDCResponse> {
+): Promise<Web3AuthResponse> {
   let formBody = [
     "refresh_token=" + refresh_token,
     "client_id=" + clientId,
@@ -167,7 +165,7 @@ export async function renewOIDCToken(
   ];
 
   if (!refresh_token) {
-    const error_data: OIDCResponse = {
+    const error_data: Web3AuthResponse = {
       error: "invalid_grant",
       error_description: "Invalid tokens",
       access_token: null,
@@ -177,7 +175,7 @@ export async function renewOIDCToken(
     return error_data;
   }
 
-  const res = await fetch(`${oidcBaseUrl}/token`, {
+  const res = await fetch(`${web3AuthBaseUrl}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -187,7 +185,7 @@ export async function renewOIDCToken(
 
   if (res.ok) {
     const newToken = await res.json();
-    const data: OIDCResponse = {
+    const data: Web3AuthResponse = {
       ...newToken,
       refresh_token: isTokenExpired(refresh_token)
         ? newToken.refresh_token
@@ -195,16 +193,16 @@ export async function renewOIDCToken(
     };
     return data;
   } else {
-    const data: OIDCResponse = await res.json();
+    const data: Web3AuthResponse = await res.json();
     console.log("renew response not ok");
     console.log(data);
     return data;
   }
 }
 
-export async function introspectOIDCToken(
+export async function introspectWeb3AuthToken(
   access_token: string,
-  oidcBaseUrl: string,
+  web3AuthBaseUrl: string,
   clientId: string,
   clientSecret: string,
   username: string
@@ -217,7 +215,7 @@ export async function introspectOIDCToken(
   ];
 
   if (!access_token) {
-    const error_data: OIDCResponse = {
+    const error_data: Web3AuthResponse = {
       error: "invalid_grant",
       error_description: "Invalid tokens",
       access_token: null,
@@ -227,7 +225,7 @@ export async function introspectOIDCToken(
     return error_data;
   }
 
-  const res = await fetch(`${oidcBaseUrl}/token/introspect`, {
+  const res = await fetch(`${web3AuthBaseUrl}/token/introspect`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -239,7 +237,7 @@ export async function introspectOIDCToken(
     const tokenIntrospect = await res.json();
     return tokenIntrospect;
   } else {
-    const data: OIDCResponse = await res.json();
+    const data: Web3AuthResponse = await res.json();
     console.log("introspect response not ok");
     console.log(data);
     return data;
@@ -377,11 +375,11 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
 
   // Handling user logout
   if (request.query.get("event") === "logout") {
-    await initiateBackChannelOIDCLogout(
+    await initiateBackChannelWeb3Logout(
       request.locals.access_token,
       clientId,
       clientSecret,
-      oidcBaseUrl,
+      web3AuthBaseUrl,
       request.locals.refresh_token
     );
     request.locals.access_token = null;
@@ -414,11 +412,11 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
     (!isAuthInfoInvalid(request.locals) ||
       isTokenExpired(request.locals.access_token))
   ) {
-    const jwts: OIDCResponse = await initiateBackChannelOIDCAuth(
+    const jwts: Web3AuthResponse = await initiateBackChannelWeb3Auth(
       request.query.get("code"),
       clientId,
       clientSecret,
-      oidcBaseUrl,
+      web3AuthBaseUrl,
       appRedirectUrl + request.path
     );
     if (jwts.error) {
@@ -467,6 +465,7 @@ export const getUserSession: GetUserSessionFn = async (
   request: ServerRequest<Locals>,
   clientSecret
 ) => {
+  console.log('utils: getUserSession')
   try {
     if (request.locals?.access_token) {
       if (
@@ -476,9 +475,9 @@ export const getUserSession: GetUserSessionFn = async (
       ) {
         let isTokenActive = true;
         try {
-          const tokenIntrospect = await introspectOIDCToken(
+          const tokenIntrospect = await introspectWeb3AuthToken(
             request.locals.access_token,
-            oidcBaseUrl,
+            web3AuthBaseUrl,
             clientId,
             clientSecret,
             request.locals.user.preferred_username
@@ -502,14 +501,11 @@ export const getUserSession: GetUserSessionFn = async (
         }
       }
       try {
-        const testAuthServerResponse = await fetch(
-          import.meta.env.VITE_OIDC_ISSUER,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const testAuthServerResponse = await fetch(web3AuthBaseUrl, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (!testAuthServerResponse.ok) {
           throw {
             error: await testAuthServerResponse.json(),
@@ -521,7 +517,7 @@ export const getUserSession: GetUserSessionFn = async (
           error_description: "Auth Server Connection Error",
         };
       }
-      const res = await fetch(`${oidcBaseUrl}/userinfo`, {
+      const res = await fetch(`${web3AuthBaseUrl}/userinfo`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${request.locals.access_token}`,
@@ -547,19 +543,19 @@ export const getUserSession: GetUserSessionFn = async (
       } else {
         try {
           const data = await res.json();
-          // console.log(data, import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES);
+          // console.log(data, import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES);
           if (
             data?.error &&
             request.locals?.retries <
-              import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES
+              import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
           ) {
             console.log(
               "old token expiry",
               isTokenExpired(request.locals.access_token)
             );
-            const newTokenData = await renewOIDCToken(
+            const newTokenData = await renewWeb3AuthToken(
               request.locals.refresh_token,
-              oidcBaseUrl,
+              web3AuthBaseUrl,
               clientId,
               clientSecret
             );
@@ -596,15 +592,15 @@ export const getUserSession: GetUserSessionFn = async (
       try {
         if (
           request.locals?.retries <
-          import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES
+          import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
         ) {
           console.log(
             "old token expiry",
             isTokenExpired(request.locals.access_token)
           );
-          const newTokenData = await renewOIDCToken(
+          const newTokenData = await renewWeb3AuthToken(
             request.locals.refresh_token,
-            oidcBaseUrl,
+            web3AuthBaseUrl,
             clientId,
             clientSecret
           );
@@ -627,14 +623,11 @@ export const getUserSession: GetUserSessionFn = async (
         );
       }
       try {
-        const testAuthServerResponse = await fetch(
-          import.meta.env.VITE_OIDC_ISSUER,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const testAuthServerResponse = await fetch(web3AuthBaseUrl, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (!testAuthServerResponse.ok) {
           throw {
             error: await testAuthServerResponse.json(),

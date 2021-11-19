@@ -1,18 +1,14 @@
 import type { Handle, GetSession } from "@sveltejs/kit";
 import { userDetailsGenerator, getUserSession } from "$lib";
-
 import type { Locals } from "$lib/types";
-
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
-// const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
-// const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
-// const appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 const clientSecret =
-  process.env.VITE_OIDC_CLIENT_SECRET ||
-  import.meta.env.VITE_OIDC_CLIENT_SECRET;
+  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
+  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
+  console.log('hooks: handle')
   // Initialization part
   const userGen = userDetailsGenerator(request, clientSecret);
   const { value, done } = await userGen.next();
@@ -50,6 +46,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
+  console.log('hooks: getSession')
   const userSession = await getUserSession(request, clientSecret);
   return userSession;
 };

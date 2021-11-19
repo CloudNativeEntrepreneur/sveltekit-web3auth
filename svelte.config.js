@@ -20,7 +20,7 @@ const config = {
         noExternal: Object.keys({}),
       },
       optimizeDeps: {
-        exclude: ["@urql/svelte", "node-fetch"],
+        exclude: ["@urql/svelte", "node-fetch", "web3"],
       },
     },
   },

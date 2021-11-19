@@ -1,11 +1,24 @@
 <script context="module" lang="ts">
-  import { initiateFrontChannelOIDCAuth } from "./utils";
-  import type { Load } from "@sveltejs/kit";
-  import type { OidcContextClientFn, OidcContextClientPromise } from "../types";
+  import { setContext } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { browser } from "$app/env";
+  import { page, session } from "$app/stores";
+  // import * as Web3 from 'web3'
+  import { initiateFrontChannelWeb3Auth } from "../_web3Auth/utils";
+  import type {
+    Web3AuthContextClientFn,
+    Web3AuthContextClientPromise,
+  } from "../types";
 
-  export const OIDC_CONTEXT_CLIENT_PROMISE = {};
-  export const OIDC_CONTEXT_REDIRECT_URI: string = "";
-  export const OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = "";
+  console.log("Web3Auth module loading");
+  const LS_KEY = 'login-with-metamask:auth';
+
+  let web3;
+  // let web3: Web3 | undefined = undefined; // Will hold the web3 instance
+
+  export const WEB3AUTH_CONTEXT_CLIENT_PROMISE = {};
+  export const WEB3AUTH_CONTEXT_REDIRECT_URI: string = "";
+  export const WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = "";
 
   import { writable } from "svelte/store";
   /**
@@ -29,11 +42,125 @@
     authError,
   };
 
-  export async function login(oidcPromise: OidcContextClientPromise) {
+  const handleLoggedIn = (auth: any) => {
+		localStorage.setItem(LS_KEY, JSON.stringify(auth));
+		AuthStore.isAuthenticated.set(true)
+		AuthStore.accessToken.set(auth.accessToken)
+    console.log("You bastard. You're in")
+    console.log(auth)
+	};
+
+	const handleLoggedOut = () => {
+		// localStorage.removeItem(LS_KEY);
+		// setState({ auth: undefined });
+	};
+
+  const handleAuthenticate = (issuer) => ({
+		publicAddress,
+		signature,
+	}: {
+		publicAddress: string;
+		signature: string;
+	}) =>
+		fetch(`${issuer}/api/auth`, {
+			body: JSON.stringify({ publicAddress, signature }),
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			method: 'POST',
+		}).then((response) => response.json());
+
+	const handleSignMessage = async ({
+		publicAddress,
+		nonce,
+	}: {
+		publicAddress: string;
+		nonce: string;
+	}) => {
+		try {
+			const signature = await web3!.eth.personal.sign(
+				`I am signing my one-time nonce: ${nonce}`,
+				publicAddress,
+				'' // MetaMask will ignore the password argument here
+			);
+
+			return { publicAddress, signature };
+		} catch (err) {
+			throw new Error(
+				'You need to sign the message to be able to log in.'
+			);
+		}
+	};
+
+	const handleSignup = (issuer: string) => (publicAddress: string) =>
+		fetch(`${issuer}/api/users`, {
+			body: JSON.stringify({ publicAddress }),
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			method: 'POST',
+		}).then((response) => response.json());
+
+  
+  async function metaMaskLogin(issuer) {
+    console.log("Web3Auth:metaMaskLogin");
+    if (!(window as any).ethereum) {
+      window.alert("Please install MetaMask first.");
+      return;
+    }
+
+    if (!web3) {
+      try {
+        // Request account access if needed
+        await (window as any).ethereum.enable();
+
+        // We don't know window.web3 version, so we use our own instance of Web3
+        // with the injected provider given by MetaMask
+        web3 = new (window as any).Web3((window as any).ethereum);
+      } catch (error) {
+        console.error(error)
+        window.alert("You need to allow MetaMask.");
+        return;
+      }
+    }
+
+    const coinbase = await web3.eth.getCoinbase();
+    if (!coinbase) {
+      window.alert("Please activate MetaMask first.");
+      return;
+    }
+
+    const publicAddress = coinbase.toLowerCase();
+
+    // Look if user with current publicAddress is already present on backend
+    console.log('Finding user with address', publicAddress)
+
+    fetch(
+      `${issuer}/api/users?publicAddress=${publicAddress}`
+    )
+      .then((response) => response.json())
+      // If yes, retrieve it. If no, create it.
+      .then((users) =>
+      	users.length ? users[0] : handleSignup(issuer)(publicAddress)
+      )
+      // Popup MetaMask confirmation modal to sign message
+      .then(handleSignMessage)
+      // Send signature to backend on the /auth route
+      .then(handleAuthenticate(issuer))
+      // Pass accessToken back to parent component (to save it in localStorage)
+      .then(handleLoggedIn)
+      .catch((err) => {
+        window.alert(err);
+      });
+  }
+
+  export async function login(web3AuthPromise: Web3AuthContextClientPromise) {
+    console.log("Web3Auth:login");
     try {
-      const oidc_func = await oidcPromise;
-      const { session, issuer, redirect, page } = oidc_func();
+      const web3Auth_func = await web3AuthPromise;
+      const { session, issuer, redirect, page } = web3Auth_func();
       console.log(session, issuer, redirect, page);
+
       if (session?.auth_server_online === false) {
         const testAuthServerResponse = await fetch(issuer, {
           headers: {
@@ -47,6 +174,7 @@
         }
       } else {
         AuthStore.isLoading.set(true);
+
         const relogin_initiate_error_list = [
           "missing_jwt",
           "invalid_grant",
@@ -56,11 +184,13 @@
         const relogin_initiate = session?.error?.error
           ? relogin_initiate_error_list.includes(session.error.error)
           : false;
+
         if (!session?.user && (!session?.error || relogin_initiate)) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
-          window.location.assign(redirect);
+
+          await metaMaskLogin(issuer);
         } else if (session?.error) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
@@ -96,11 +226,12 @@
   }
 
   export async function logout(
-    oidcPromise: OidcContextClientPromise,
+    web3AuthPromise: Web3AuthContextClientPromise,
     post_logout_redirect_uri: string
   ) {
-    const oidc_func = await oidcPromise;
-    const { issuer, client_id } = oidc_func();
+    console.log("Web3Auth:logout");
+    const web3Auth_func = await web3AuthPromise;
+    const { issuer, client_id } = web3Auth_func();
     const logout_endpoint = `${issuer}/protocol/openid-connect/logout`;
     const logout_uri = `${issuer}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(
       post_logout_redirect_uri + "?event=logout"
@@ -124,12 +255,6 @@
 </script>
 
 <script lang="ts">
-  import { setContext } from "svelte";
-  import { onMount, onDestroy } from "svelte";
-  import { browser } from "$app/env";
-
-  import { page, session } from "$app/stores";
-
   // props.
   export let issuer: string;
   export let client_id: string;
@@ -139,16 +264,16 @@
   export let refresh_token_endpoint: string;
   export let refresh_page_on_session_timeout: boolean = false;
 
-  const oidcBaseUrl = `${issuer}/protocol/openid-connect`;
-
-  const oidc_func: OidcContextClientFn = (
+  const web3AuthBaseUrl = issuer;
+  
+  const web3Auth_func: Web3AuthContextClientFn = (
     request_path?: string,
     request_params?: Record<string, string>
   ) => {
     return {
-      redirect: initiateFrontChannelOIDCAuth(
+      redirect: initiateFrontChannelWeb3Auth(
         browser,
-        oidcBaseUrl,
+        web3AuthBaseUrl,
         client_id,
         scope,
         redirect_uri,
@@ -161,14 +286,18 @@
       client_id,
     };
   };
-  const oidc_auth_promise: OidcContextClientPromise =
-    Promise.resolve(oidc_func);
-  setContext(OIDC_CONTEXT_CLIENT_PROMISE, oidc_auth_promise);
-  setContext(OIDC_CONTEXT_REDIRECT_URI, redirect_uri);
-  setContext(OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI, post_logout_redirect_uri);
+  const oidc_auth_promise: Web3AuthContextClientPromise =
+    Promise.resolve(web3Auth_func);
+  setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, oidc_auth_promise);
+  setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirect_uri);
+  setContext(
+    WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI,
+    post_logout_redirect_uri
+  );
 
   let tokenTimeoutObj = null;
   export async function silentRefresh(oldRefreshToken: string) {
+    console.log("Web3Auth:silentRefresh");
     try {
       const reqBody = `refresh_token=${oldRefreshToken}`;
       const res = await fetch(refresh_token_endpoint, {
@@ -178,46 +307,45 @@
         },
         body: reqBody,
       });
+
       if (res.ok) {
         const resData = await res.json();
-        if (!resData.error) {
-          const { access_token, refresh_token } = resData;
-          AuthStore.accessToken.set(access_token);
-          AuthStore.refreshToken.set(refresh_token);
-          const jwtData = JSON.parse(
-            atob(access_token.split(".")[1]).toString()
-          );
-          const tokenSkew = 10; // 10 seconds before actual token expiry
-          const skewedTimeoutDuration =
-            jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
-          const timeoutDuration =
-            skewedTimeoutDuration > 0
-              ? skewedTimeoutDuration
-              : skewedTimeoutDuration + tokenSkew * 1000;
-          if (tokenTimeoutObj) {
-            clearTimeout(tokenTimeoutObj);
-          }
-          if (timeoutDuration > 0) {
-            tokenTimeoutObj = setTimeout(async () => {
-              await silentRefresh(refresh_token);
-            }, timeoutDuration);
-          } else {
-            throw {
-              error: "invalid_grant",
-              error_description: "Session not active",
-            };
-          }
-        } else {
+
+        if (resData.error) {
           throw {
-            error: resData.error,
-            error_description: resData.error_description,
+            error: "token_refresh_error",
+            error_description: "Unable to Refresh token",
           };
         }
-      } else {
-        throw {
-          error: "token_refresh_error",
-          error_description: "Unable to Refresh token",
-        };
+
+        const { access_token, refresh_token } = resData;
+
+        AuthStore.accessToken.set(access_token);
+        AuthStore.refreshToken.set(refresh_token);
+
+        const jwtData = JSON.parse(atob(access_token.split(".")[1]).toString());
+        const tokenSkew = 10; // 10 seconds before actual token expiry
+        const skewedTimeoutDuration =
+          jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
+        const timeoutDuration =
+          skewedTimeoutDuration > 0
+            ? skewedTimeoutDuration
+            : skewedTimeoutDuration + tokenSkew * 1000;
+
+        if (tokenTimeoutObj) {
+          clearTimeout(tokenTimeoutObj);
+        }
+
+        if (timeoutDuration > 0) {
+          tokenTimeoutObj = setTimeout(async () => {
+            await silentRefresh(refresh_token);
+          }, timeoutDuration);
+        } else {
+          throw {
+            error: "invalid_grant",
+            error_description: "Session not active",
+          };
+        }
       }
     } catch (e) {
       if (tokenTimeoutObj) {
@@ -235,8 +363,10 @@
       }
     }
   }
+
   const syncLogout = (event: StorageEvent) => {
     if (browser) {
+      console.log("Web3Auth:syncLogout");
       if (event.key === "user_logout") {
         try {
           if (JSON.parse(window.localStorage.getItem("user_logout"))) {
@@ -260,6 +390,7 @@
 
   const syncLogin = (event: StorageEvent) => {
     if (browser) {
+      console.log("Web3Auth:syncLogin");
       if (event.key === "user_login") {
         try {
           window.localStorage.setItem("user_logout", "false");
@@ -285,6 +416,7 @@
   };
 
   async function handleMount() {
+    console.log("Web3Auth:handleMount");
     try {
       window.addEventListener("storage", syncLogout);
       window.addEventListener("storage", syncLogin);
@@ -292,6 +424,7 @@
 
     try {
       if ($session?.auth_server_online === false) {
+        console.log("Web3Auth:handleMount - testing Server", issuer);
         const testAuthServerResponse = await fetch(issuer, {
           headers: {
             "Content-Type": "application/json",
@@ -303,6 +436,7 @@
           };
         }
       } else {
+        console.log("Web3Auth:handleMount - loaded");
         AuthStore.isLoading.set(false);
         if (!$session.user) {
           AuthStore.isAuthenticated.set(false);
@@ -342,6 +476,7 @@
         }
       }
     } catch (e) {
+      console.error("Web3Auth:handleMount - error");
       console.error(e);
       AuthStore.isLoading.set(false);
       AuthStore.isAuthenticated.set(false);

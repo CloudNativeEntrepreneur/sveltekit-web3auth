@@ -1,5 +1,5 @@
 export {
-  default as Keycloak,
+  default as Web3Auth,
   // @ts-ignore
   isLoading,
   // @ts-ignore
@@ -14,23 +14,23 @@ export {
   userInfo,
   // @ts-ignore
   authError,
-} from "./_keycloak/Keycloak.svelte";
-export { default as LoginButton } from "./_keycloak/LoginButton.svelte";
-export { default as LogoutButton } from "./_keycloak/LogoutButton.svelte";
-export { default as KeycloakProtectedRoute } from "./_keycloak/KeycloakProtectedRoute.svelte";
+} from "./_web3Auth/Web3Auth.svelte";
+export { default as LoginButton } from "./_web3Auth/LoginButton.svelte"
+export { default as LogoutButton } from "./_web3Auth/LogoutButton.svelte";
+export { default as ProtectedRoute } from "./_web3Auth/ProtectedRoute.svelte";
 export {
-  oidcBaseUrl,
+  web3AuthBaseUrl,
   clientId,
   isTokenExpired,
-  initiateFrontChannelOIDCAuth,
-  initiateBackChannelOIDCAuth,
-  initiateBackChannelOIDCLogout,
-  renewOIDCToken,
-  introspectOIDCToken,
+  initiateFrontChannelWeb3Auth,
+  initiateBackChannelWeb3Auth,
+  initiateBackChannelWeb3AuthLogout,
+  renewWeb3AuthToken,
+  introspectWeb3AuthToken,
   populateRequestLocals,
   populateResponseHeaders,
   injectCookies,
   parseUser,
   userDetailsGenerator,
   getUserSession,
-} from "./_keycloak/utils";
+} from "./_web3Auth/utils";

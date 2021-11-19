@@ -15,7 +15,7 @@ export interface Locals {
   cookieAttributes?: string;
 }
 
-export type OidcContextClientFn = (
+export type Web3AuthContextClientFn = (
   request_path?: string,
   request_params?: Record<string, string>
 ) => {
@@ -26,17 +26,18 @@ export type OidcContextClientFn = (
   client_id: string;
 };
 
-export type OidcContextClientPromise = Promise<OidcContextClientFn>;
+export type Web3AuthContextClientPromise = Promise<Web3AuthContextClientFn>;
 
-export interface OIDCSuccessResponse {
+export interface Web3AuthSuccessResponse {
   access_token: string;
   id_token: string;
   refresh_token: string;
 }
 
-export interface OIDCFailureResponse extends AuthError {}
+export interface Web3AuthFailureResponse extends AuthError {}
 
-export type OIDCResponse = OIDCSuccessResponse & OIDCFailureResponse;
+export type Web3AuthResponse = Web3AuthSuccessResponse &
+  Web3AuthFailureResponse;
 
 export interface UserDetailsGeneratorFn {
   (request: ServerRequest<Locals>, clientSecret: string): AsyncGenerator<

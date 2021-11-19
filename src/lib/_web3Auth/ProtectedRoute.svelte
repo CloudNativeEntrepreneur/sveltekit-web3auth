@@ -2,30 +2,32 @@
   import { browser } from "$app/env";
   import { session, page } from "$app/stores";
   import { getContext } from "svelte";
-  import { OIDC_CONTEXT_CLIENT_PROMISE } from "./Keycloak.svelte";
-  import type { OidcContextClientPromise } from "../types";
+  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "./Web3Auth.svelte";
+  import type { Web3AuthContextClientPromise } from "../types";
   import { isTokenExpired } from "./utils";
 
   let isAuthenticated = false;
 
   const loadUser = async () => {
     if (browser) {
-      const oidcPromise: OidcContextClientPromise = getContext(
-        OIDC_CONTEXT_CLIENT_PROMISE
+      const web3AuthPromise: Web3AuthContextClientPromise = getContext(
+        WEB3AUTH_CONTEXT_CLIENT_PROMISE
       );
-      const oidc_func = await oidcPromise;
-      const { redirect } = oidc_func($page.path, $page.params);
+      const web3Auth_func = await web3AuthPromise;
+      const { redirect } = web3Auth_func($page.path, $page.params);
       if (!$session?.user || !$session?.access_token || !$session?.user) {
         try {
           console.log(redirect);
-          window.location.assign(redirect);
+          // window.location.assign(redirect);
+          console.log("AUTH HERE");
         } catch (e) {
           console.error(e);
         }
       } else {
         if (isTokenExpired($session.access_token)) {
           console.log(redirect);
-          window.location.assign(redirect);
+          // window.location.assign(redirect);
+          console.log("AUTH HERE");
         }
         isAuthenticated = true;
       }
