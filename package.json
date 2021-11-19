@@ -2,7 +2,7 @@
   "name": "sveltekit-web3-auth",
   "version": "0.0.0-development",
   "scripts": {
-    "dev": "svelte-kit dev",
+    "dev": "svelte-kit dev --port 3003",
     "build": "svelte-kit build",
     "package": "svelte-kit package",
     "preview": "svelte-kit preview",

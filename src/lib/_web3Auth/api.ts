@@ -92,30 +92,30 @@ export async function initiateBackChannelWeb3AuthLogout(
 }
 
 export const handleAuthenticate =
-(issuer) =>
-({
-  publicAddress,
-  signature,
-}: {
-  publicAddress: string;
-  signature: string;
-}) =>
-  fetch(`${issuer}/api/auth`, {
-    body: JSON.stringify({ publicAddress, signature }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  }).then((response) => response.json());
-
-export const handleSignup = (issuer: string) => (publicAddress: string) =>
-    fetch(`${issuer}/api/users`, {
-      body: JSON.stringify({ publicAddress }),
+  (issuer) =>
+  ({
+    publicAddress,
+    signature,
+  }: {
+    publicAddress: string;
+    signature: string;
+  }) =>
+    fetch(`${issuer}/api/auth`, {
+      body: JSON.stringify({ publicAddress, signature }),
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
     }).then((response) => response.json());
+
+export const handleSignup = (issuer: string) => (publicAddress: string) =>
+  fetch(`${issuer}/api/users`, {
+    body: JSON.stringify({ publicAddress }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  }).then((response) => response.json());
 
 export async function renewWeb3AuthToken(
   refresh_token: string,

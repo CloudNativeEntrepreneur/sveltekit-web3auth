@@ -7,8 +7,8 @@
     Web3AuthContextClientFn,
     Web3AuthContextClientPromise,
   } from "../types";
-  import { handleAuthenticate, handleSignup } from './api'
-  import { handleSignMessage } from './metamask'
+  import { handleAuthenticate, handleSignup } from "./api";
+  import { handleSignMessage } from "./metamask";
 
   console.log("Web3Auth module loading");
   // TODO: this LS key is temporary - at least it's current value, and likely how it's used
@@ -44,6 +44,8 @@
   };
 
   const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
+    localStorage.removeItem("user_logout");
+    localStorage.setItem("user_login", JSON.stringify(auth));
     localStorage.setItem(LS_KEY, JSON.stringify(auth));
     AuthStore.isAuthenticated.set(true);
     AuthStore.accessToken.set(auth.accessToken);
@@ -52,12 +54,6 @@
     });
     console.log("You bastard. You're in");
     console.log(auth);
-  };
-
-  const handleLoggedOut = () => {
-    localStorage.removeItem(LS_KEY);
-    localStorage.setItem("logout", "true");
-    // setState({ auth: undefined });
   };
 
   async function metaMaskLogin({ issuer, session }) {
@@ -179,29 +175,27 @@
 
   export async function logout(
     web3AuthPromise: Web3AuthContextClientPromise,
-    post_logout_redirect_uri: string
+    postLogoutRedirectURI?: string
   ) {
     console.log("Web3Auth:logout");
     const web3Auth_func = await web3AuthPromise;
-    const { issuer, client_id } = web3Auth_func();
-    const logout_endpoint = `${issuer}/protocol/openid-connect/logout`;
-    const logout_uri = `${issuer}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(
-      post_logout_redirect_uri + "?event=logout"
-    )}`;
+    const web3Params = web3Auth_func();
+    // TODO: potential improvement - notify auth server to end session
 
-    const res = await fetch(logout_endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${AuthStore.accessToken}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `client_id=${client_id}&refresh_token=${AuthStore.refreshToken}`,
-    });
+    window.localStorage.removeItem(LS_KEY);
+    // trigger logout in other tabs
+    window.localStorage.removeItem("user_login");
+    AuthStore.accessToken.set(null);
+    AuthStore.refreshToken.set(null);
+    AuthStore.isAuthenticated.set(false);
+    AuthStore.isLoading.set(false);
     window.localStorage.setItem("user_logout", "true");
-    if (res.ok) {
-      window.location.assign(logout_uri);
+
+    if (postLogoutRedirectURI) {
+      console.log("post_logout_redirect", postLogoutRedirectURI);
+      window.location.assign(postLogoutRedirectURI);
     } else {
-      window.location.assign(logout_uri);
+      console.log("no post logout redirect configured");
     }
   }
 </script>
@@ -209,19 +203,19 @@
 <script lang="ts">
   // props.
   export let issuer: string;
-  export let client_id: string;
-  export let redirect_uri: string;
-  export let post_logout_redirect_uri: string;
-  // export let scope: string;
-  export let refresh_token_endpoint: string;
-  export let refresh_page_on_session_timeout: boolean = false;
+  export let clientId: string;
+  export let redirectURI: string;
+  export let postLogoutRedirectURI: string;
+  export let scope: string;
+  export let refreshTokenEndpoint: string;
+  export let refreshPageOnSessionTimeout: boolean = false;
 
   const web3Auth_func: Web3AuthContextClientFn = () => {
     return {
       session: $session,
       issuer,
       page: $page,
-      client_id,
+      clientId,
     };
   };
 
@@ -229,18 +223,15 @@
     Promise.resolve(web3Auth_func);
 
   setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3_auth_promise);
-  setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirect_uri);
-  setContext(
-    WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI,
-    post_logout_redirect_uri
-  );
+  setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirectURI);
+  setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
   let tokenTimeoutObj = null;
   export async function silentRefresh(oldRefreshToken: string) {
     console.log("Web3Auth:silentRefresh");
     try {
       const reqBody = `refresh_token=${oldRefreshToken}`;
-      const res = await fetch(refresh_token_endpoint, {
+      const res = await fetch(refreshTokenEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -298,7 +289,7 @@
         error: e?.error,
         error_description: e?.error_description,
       });
-      if (refresh_page_on_session_timeout) {
+      if (refreshPageOnSessionTimeout) {
         window.location.assign($page.path);
       }
     }
@@ -306,11 +297,11 @@
 
   const syncLogout = (event: StorageEvent) => {
     if (browser) {
-      console.log("Web3Auth:syncLogout");
       if (event.key === "user_logout") {
+        console.log("Web3Auth:syncLogout");
         try {
           if (JSON.parse(window.localStorage.getItem("user_logout"))) {
-            window.localStorage.setItem("user_login", null);
+            window.localStorage.removeItem("user_login");
 
             AuthStore.accessToken.set(null);
             AuthStore.refreshToken.set(null);
@@ -319,7 +310,8 @@
               error: "invalid_grant",
               error_description: "Session is not active",
             });
-            if (refresh_page_on_session_timeout) {
+            if (refreshPageOnSessionTimeout) {
+              console.log("refresh page on session timeout");
               window.location.assign($page.path);
             }
           }
@@ -329,11 +321,12 @@
   };
 
   const syncLogin = (event: StorageEvent) => {
+    console.log("syncLogin - storage changed");
     if (browser) {
-      console.log("Web3Auth:syncLogin");
       if (event.key === "user_login") {
+        console.log("Web3Auth:syncLogin");
         try {
-          window.localStorage.setItem("user_logout", "false");
+          window.localStorage.removeItem("user_logout");
           const userInfo = JSON.parse(
             window.localStorage.getItem("user_login")
           );
@@ -358,6 +351,7 @@
   async function handleMount() {
     console.log("Web3Auth:handleMount");
     try {
+      console.log("Web3Auth:handleMount - adding event listeners");
       window.addEventListener("storage", syncLogout);
       window.addEventListener("storage", syncLogin);
     } catch (e) {}

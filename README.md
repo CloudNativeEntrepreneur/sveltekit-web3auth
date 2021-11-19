@@ -176,12 +176,12 @@ export const getSession: GetSession = async (
 
 <Keycloak
   issuer="{import.meta.env.VITE_OIDC_ISSUER}"
-  client_id="{import.meta.env.VITE_OIDC_CLIENT_ID}"
+  clientId="{import.meta.env.VITE_OIDC_CLIENT_ID}"
   scope="{import.meta.env.VITE_OIDC_CLIENT_SCOPE}"
-  redirect_uri="{import.meta.env.VITE_OIDC_REDIRECT_URI}"
-  post_logout_redirect_uri="{import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}"
-  refresh_token_endpoint="{import.meta.env.VITE_OIDC_REFRESH_TOKEN_ENDPOINT}"
-  refresh_page_on_session_timeout="{import.meta.env.VITE_OIDC_REFRESH_PAGE_ON_SESSION_TIMEOUT}"
+  redirectURI="{import.meta.env.VITE_OIDC_REDIRECT_URI}"
+  postLogoutRedirectURI="{import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}"
+  refreshTokenEndpoint="{import.meta.env.VITE_OIDC_REFRESH_TOKEN_ENDPOINT}"
+  refreshPageOnSessionTimeout="{import.meta.env.VITE_OIDC_REFRESH_PAGE_ON_SESSION_TIMEOUT}"
 >
   <slot></slot>
 </Keycloak>

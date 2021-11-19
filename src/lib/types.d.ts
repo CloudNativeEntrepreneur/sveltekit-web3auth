@@ -22,7 +22,7 @@ export type Web3AuthContextClientFn = (
   session: any;
   issuer: string;
   page: Page;
-  client_id: string;
+  clientId: string;
 };
 
 export type Web3AuthContextClientPromise = Promise<Web3AuthContextClientFn>;

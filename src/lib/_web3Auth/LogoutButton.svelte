@@ -10,7 +10,7 @@
   const web3AuthPromise: Web3AuthContextClientPromise = getContext(
     WEB3AUTH_CONTEXT_CLIENT_PROMISE
   );
-  const post_logout_redirect_uri: string = getContext(
+  const postLogoutRedirectURI: string = getContext(
     WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI
   );
 
@@ -20,8 +20,7 @@
 
 <button
   class={clazz}
-  on:click|preventDefault={() =>
-    logout(web3AuthPromise, post_logout_redirect_uri)}
+  on:click|preventDefault={() => logout(web3AuthPromise, postLogoutRedirectURI)}
 >
   <slot />
 </button>
