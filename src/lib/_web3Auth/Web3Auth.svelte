@@ -7,6 +7,8 @@
     Web3AuthContextClientFn,
     Web3AuthContextClientPromise,
   } from "../types";
+  import { handleAuthenticate, handleSignup } from './api'
+  import { handleSignMessage } from './metamask'
 
   console.log("Web3Auth module loading");
   // TODO: this LS key is temporary - at least it's current value, and likely how it's used
@@ -58,52 +60,6 @@
     // setState({ auth: undefined });
   };
 
-  const handleAuthenticate =
-    (issuer) =>
-    ({
-      publicAddress,
-      signature,
-    }: {
-      publicAddress: string;
-      signature: string;
-    }) =>
-      fetch(`${issuer}/api/auth`, {
-        body: JSON.stringify({ publicAddress, signature }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      }).then((response) => response.json());
-
-  const handleSignMessage = async ({
-    publicAddress,
-    nonce,
-  }: {
-    publicAddress: string;
-    nonce: string;
-  }) => {
-    try {
-      const signature = await web3!.eth.personal.sign(
-        `I am signing my one-time nonce: ${nonce}`,
-        publicAddress,
-        "" // MetaMask will ignore the password argument here
-      );
-
-      return { publicAddress, signature };
-    } catch (err) {
-      throw new Error("You need to sign the message to be able to log in.");
-    }
-  };
-
-  const handleSignup = (issuer: string) => (publicAddress: string) =>
-    fetch(`${issuer}/api/users`, {
-      body: JSON.stringify({ publicAddress }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    }).then((response) => response.json());
-
   async function metaMaskLogin({ issuer, session }) {
     console.log("Web3Auth:metaMaskLogin");
     if (!(window as any).ethereum) {
@@ -144,7 +100,7 @@
         users.length ? users[0] : handleSignup(issuer)(publicAddress)
       )
       // Popup MetaMask confirmation modal to sign message
-      .then(handleSignMessage)
+      .then(handleSignMessage(web3))
       // Send signature to backend on the /auth route
       .then(handleAuthenticate(issuer))
       // Pass accessToken back to parent component (to save it in localStorage)
