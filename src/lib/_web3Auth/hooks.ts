@@ -22,11 +22,10 @@ import {
 import { config } from "./config";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
-const { clientId, issuer } = config;
+const { clientId, issuer, redirectUri } = config;
 
-export const web3AuthBaseUrl = `${import.meta.env.VITE_WEB3_AUTH_ISSUER}`;
-
-let appRedirectUrl = import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI;
+const web3AuthBaseUrl = issuer;
+let appRedirectUrl = redirectUri;
 
 export const getUserSession: GetUserSessionFn = async (
   request: ServerRequest<Locals>,
