@@ -3,8 +3,6 @@
   import { onMount, onDestroy } from "svelte";
   import { browser } from "$app/env";
   import { page, session } from "$app/stores";
-  // import * as Web3 from 'web3'
-  import { initiateFrontChannelWeb3Auth } from "../_web3Auth/utils";
   import type {
     Web3AuthContextClientFn,
     Web3AuthContextClientPromise,
@@ -158,8 +156,8 @@
     console.log("Web3Auth:login");
     try {
       const web3Auth_func = await web3AuthPromise;
-      const { session, issuer, redirect, page } = web3Auth_func();
-      console.log(session, issuer, redirect, page);
+      const { session, issuer, page } = web3Auth_func();
+      console.log(session, issuer, page);
 
       if (session?.auth_server_online === false) {
         const testAuthServerResponse = await fetch(issuer, {
@@ -266,20 +264,8 @@
 
   const web3AuthBaseUrl = issuer;
   
-  const web3Auth_func: Web3AuthContextClientFn = (
-    request_path?: string,
-    request_params?: Record<string, string>
-  ) => {
+  const web3Auth_func: Web3AuthContextClientFn = () => {
     return {
-      redirect: initiateFrontChannelWeb3Auth(
-        browser,
-        web3AuthBaseUrl,
-        client_id,
-        scope,
-        redirect_uri,
-        request_path,
-        request_params
-      ).redirect,
       session: $session,
       issuer,
       page: $page,

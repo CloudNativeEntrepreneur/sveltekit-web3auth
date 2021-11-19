@@ -19,7 +19,6 @@ export type Web3AuthContextClientFn = (
   request_path?: string,
   request_params?: Record<string, string>
 ) => {
-  redirect: string;
   session: any;
   issuer: string;
   page: Page;

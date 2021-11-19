@@ -22,7 +22,6 @@ export {
   web3AuthBaseUrl,
   clientId,
   isTokenExpired,
-  initiateFrontChannelWeb3Auth,
   initiateBackChannelWeb3Auth,
   initiateBackChannelWeb3AuthLogout,
   renewWeb3AuthToken,

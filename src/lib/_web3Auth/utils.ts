@@ -31,36 +31,6 @@ export function isTokenExpired(jwt: string): boolean {
     : true;
 }
 
-export function initiateFrontChannelWeb3Auth(
-  browser: boolean,
-  web3AuthBaseUrl: string,
-  clientId: string,
-  client_scopes: string,
-  appRedirectUrl: string,
-  request_path?: string,
-  request_params?: Record<string, string>
-): LoadOutput {
-  const web3AuthRedirectUrlWithParams = [
-    `${web3AuthBaseUrl}/auth?scope=${
-      browser ? encodeURIComponent(client_scopes) : client_scopes
-    }`,
-    `client_id=${clientId}`,
-    `redirect_uri=${
-      browser
-        ? encodeURIComponent(
-            appRedirectUrl + (request_path ? request_path : "/")
-          )
-        : appRedirectUrl + (request_path ? request_path : "/")
-    }`,
-    "response_type=code",
-    "response_mode=query",
-  ];
-  return {
-    redirect: web3AuthRedirectUrlWithParams.join("&"),
-    status: 302,
-  };
-}
-
 export async function initiateBackChannelWeb3Auth(
   authCode: string,
   clientId: string,
