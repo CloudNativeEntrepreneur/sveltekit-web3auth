@@ -21,6 +21,12 @@ When the client side kicks in, it:
 
 Goal is complete JWT Implementation based on [Hasura Blog on BEST Practices for JWT AUTH](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/) in context of meta mask login and challenge/signature auth flow.
 
+More useful reading:
+
+- https://github.com/vnovick/graphql-jwt-tutorial/
+- https://www.toptal.com/ethereum/one-click-login-flows-a-metamask-tutorial
+- https://github.com/amaurym/login-with-metamask-demo
+
 ### Npm Package link
 
 https://www.npmjs.com/package/sveltekit-web3auth
