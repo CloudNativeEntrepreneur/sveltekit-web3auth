@@ -9,7 +9,8 @@
   } from "../types";
 
   console.log("Web3Auth module loading");
-  const LS_KEY = 'login-with-metamask:auth';
+  // TODO: this LS key is temporary - at least it's current value, and likely how it's used
+  const LS_KEY = "login-with-metamask:auth";
 
   let web3;
   // let web3: Web3 | undefined = undefined; // Will hold the web3 instance
@@ -40,67 +41,70 @@
     authError,
   };
 
-  const handleLoggedIn = (auth: any) => {
-		localStorage.setItem(LS_KEY, JSON.stringify(auth));
-		AuthStore.isAuthenticated.set(true)
-		AuthStore.accessToken.set(auth.accessToken)
-    console.log("You bastard. You're in")
-    console.log(auth)
-	};
+  const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
+    localStorage.setItem(LS_KEY, JSON.stringify(auth));
+    AuthStore.isAuthenticated.set(true);
+    AuthStore.accessToken.set(auth.accessToken);
+    AuthStore.userInfo.set({
+      publicAddress,
+    });
+    console.log("You bastard. You're in");
+    console.log(auth);
+  };
 
-	const handleLoggedOut = () => {
-		// localStorage.removeItem(LS_KEY);
-		// setState({ auth: undefined });
-	};
+  const handleLoggedOut = () => {
+    localStorage.removeItem(LS_KEY);
+    localStorage.setItem("logout", "true");
+    // setState({ auth: undefined });
+  };
 
-  const handleAuthenticate = (issuer) => ({
-		publicAddress,
-		signature,
-	}: {
-		publicAddress: string;
-		signature: string;
-	}) =>
-		fetch(`${issuer}/api/auth`, {
-			body: JSON.stringify({ publicAddress, signature }),
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			method: 'POST',
-		}).then((response) => response.json());
+  const handleAuthenticate =
+    (issuer) =>
+    ({
+      publicAddress,
+      signature,
+    }: {
+      publicAddress: string;
+      signature: string;
+    }) =>
+      fetch(`${issuer}/api/auth`, {
+        body: JSON.stringify({ publicAddress, signature }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }).then((response) => response.json());
 
-	const handleSignMessage = async ({
-		publicAddress,
-		nonce,
-	}: {
-		publicAddress: string;
-		nonce: string;
-	}) => {
-		try {
-			const signature = await web3!.eth.personal.sign(
-				`I am signing my one-time nonce: ${nonce}`,
-				publicAddress,
-				'' // MetaMask will ignore the password argument here
-			);
+  const handleSignMessage = async ({
+    publicAddress,
+    nonce,
+  }: {
+    publicAddress: string;
+    nonce: string;
+  }) => {
+    try {
+      const signature = await web3!.eth.personal.sign(
+        `I am signing my one-time nonce: ${nonce}`,
+        publicAddress,
+        "" // MetaMask will ignore the password argument here
+      );
 
-			return { publicAddress, signature };
-		} catch (err) {
-			throw new Error(
-				'You need to sign the message to be able to log in.'
-			);
-		}
-	};
+      return { publicAddress, signature };
+    } catch (err) {
+      throw new Error("You need to sign the message to be able to log in.");
+    }
+  };
 
-	const handleSignup = (issuer: string) => (publicAddress: string) =>
-		fetch(`${issuer}/api/users`, {
-			body: JSON.stringify({ publicAddress }),
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			method: 'POST',
-		}).then((response) => response.json());
+  const handleSignup = (issuer: string) => (publicAddress: string) =>
+    fetch(`${issuer}/api/users`, {
+      body: JSON.stringify({ publicAddress }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    }).then((response) => response.json());
 
-  
-  async function metaMaskLogin(issuer) {
+  async function metaMaskLogin({ issuer, session }) {
     console.log("Web3Auth:metaMaskLogin");
     if (!(window as any).ethereum) {
       window.alert("Please install MetaMask first.");
@@ -116,7 +120,7 @@
         // with the injected provider given by MetaMask
         web3 = new (window as any).Web3((window as any).ethereum);
       } catch (error) {
-        console.error(error)
+        console.error(error);
         window.alert("You need to allow MetaMask.");
         return;
       }
@@ -131,22 +135,20 @@
     const publicAddress = coinbase.toLowerCase();
 
     // Look if user with current publicAddress is already present on backend
-    console.log('Finding user with address', publicAddress)
+    console.log("Finding user with address", publicAddress);
 
-    fetch(
-      `${issuer}/api/users?publicAddress=${publicAddress}`
-    )
+    fetch(`${issuer}/api/users?publicAddress=${publicAddress}`)
       .then((response) => response.json())
       // If yes, retrieve it. If no, create it.
       .then((users) =>
-      	users.length ? users[0] : handleSignup(issuer)(publicAddress)
+        users.length ? users[0] : handleSignup(issuer)(publicAddress)
       )
       // Popup MetaMask confirmation modal to sign message
       .then(handleSignMessage)
       // Send signature to backend on the /auth route
       .then(handleAuthenticate(issuer))
       // Pass accessToken back to parent component (to save it in localStorage)
-      .then(handleLoggedIn)
+      .then(handleLoggedIn(publicAddress, session))
       .catch((err) => {
         window.alert(err);
       });
@@ -188,17 +190,13 @@
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
 
-          await metaMaskLogin(issuer);
+          await metaMaskLogin({ issuer, session });
         } else if (session?.error) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
           AuthStore.authError.set(session.error);
-          if (session.error?.error === "invalid_request") {
-            window.location.assign(redirect);
-          } else {
-            AuthStore.isLoading.set(false);
-          }
+          AuthStore.isLoading.set(false);
         } else {
           AuthStore.isLoading.set(false);
           AuthStore.isAuthenticated.set(true);
@@ -262,8 +260,6 @@
   export let refresh_token_endpoint: string;
   export let refresh_page_on_session_timeout: boolean = false;
 
-  const web3AuthBaseUrl = issuer;
-  
   const web3Auth_func: Web3AuthContextClientFn = () => {
     return {
       session: $session,
@@ -272,9 +268,11 @@
       client_id,
     };
   };
-  const oidc_auth_promise: Web3AuthContextClientPromise =
+
+  const web3_auth_promise: Web3AuthContextClientPromise =
     Promise.resolve(web3Auth_func);
-  setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, oidc_auth_promise);
+
+  setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3_auth_promise);
   setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirect_uri);
   setContext(
     WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI,

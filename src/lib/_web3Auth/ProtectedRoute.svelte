@@ -4,7 +4,7 @@
   import { getContext } from "svelte";
   import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "./Web3Auth.svelte";
   import type { Web3AuthContextClientPromise } from "../types";
-  import { isTokenExpired } from "./utils";
+  import { isTokenExpired } from "./jwt";
 
   let isAuthenticated = false;
 

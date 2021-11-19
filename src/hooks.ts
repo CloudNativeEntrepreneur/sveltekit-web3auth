@@ -8,7 +8,7 @@ const clientSecret =
   import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log('hooks: handle')
+  console.log("hooks: handle");
   // Initialization part
   const userGen = userDetailsGenerator(request, clientSecret);
   const { value, done } = await userGen.next();
@@ -46,7 +46,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
-  console.log('hooks: getSession')
+  console.log("hooks: getSession");
   const userSession = await getUserSession(request, clientSecret);
   return userSession;
 };
