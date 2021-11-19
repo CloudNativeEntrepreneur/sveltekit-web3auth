@@ -256,7 +256,7 @@
   export let client_id: string;
   export let redirect_uri: string;
   export let post_logout_redirect_uri: string;
-  export let scope: string;
+  // export let scope: string;
   export let refresh_token_endpoint: string;
   export let refresh_page_on_session_timeout: boolean = false;
 

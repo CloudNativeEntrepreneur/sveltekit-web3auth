@@ -14,10 +14,10 @@
         WEB3AUTH_CONTEXT_CLIENT_PROMISE
       );
       const web3Auth_func = await web3AuthPromise;
-      const { redirect } = web3Auth_func($page.path, $page.params);
+      const web3Params = web3Auth_func($page.path, $page.params);
       if (!$session?.user || !$session?.access_token || !$session?.user) {
         try {
-          console.log(redirect);
+          // console.log(redirect);
           // window.location.assign(redirect);
           console.log("AUTH HERE");
         } catch (e) {
@@ -25,7 +25,7 @@
         }
       } else {
         if (isTokenExpired($session.access_token)) {
-          console.log(redirect);
+          // console.log(redirect);
           // window.location.assign(redirect);
           console.log("AUTH HERE");
         }
