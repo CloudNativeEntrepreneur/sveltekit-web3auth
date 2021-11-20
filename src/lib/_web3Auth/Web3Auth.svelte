@@ -44,14 +44,37 @@
   };
 
   const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
+    const user = JSON.parse(
+      atob(auth.accessToken.token.split(".")[1]).toString()
+    );
+    delete user.iat;
+    // TODO: user.payload is temp for metamask login react demo
+    delete user.payload;
     localStorage.removeItem("user_logout");
-    localStorage.setItem("user_login", JSON.stringify(auth));
+    localStorage.setItem("user_login", JSON.stringify(user));
     localStorage.setItem(LS_KEY, JSON.stringify(auth));
     AuthStore.isAuthenticated.set(true);
-    AuthStore.accessToken.set(auth.accessToken);
+    AuthStore.accessToken.set(auth.accessToken.token);
+    AuthStore.refreshToken.set(auth.refreshToken.token);
     AuthStore.userInfo.set({
       publicAddress,
     });
+
+    return fetch(`/auth/login`, {
+      body: JSON.stringify({ auth }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    }).then((response) => response.json());
+
+    // document.cookie = `userInfoBrowser=${JSON.stringify({
+    //   userid: publicAddress,
+    // user: JSON.parse(
+    //   atob(auth.accessToken.token.split(".")[1]).toString()
+    // ),
+    //   refresh_token: auth.refreshToken.token
+    // })};`
     console.log("You bastard. You're in");
     console.log(auth);
   };
@@ -89,7 +112,7 @@
     // Look if user with current publicAddress is already present on backend
     console.log("Finding user with address", publicAddress);
 
-    fetch(`${issuer}/api/users?publicAddress=${publicAddress}`)
+    fetch(`${issuer}/auth/users?publicAddress=${publicAddress}`)
       .then((response) => response.json())
       // If yes, retrieve it. If no, create it.
       .then((users) =>
@@ -376,9 +399,9 @@
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
-          if (window.location.toString().includes("event=logout")) {
-            window.location.assign($page.path);
-          }
+          // if (window.location.toString().includes("event=logout")) {
+          //   window.location.assign($page.path);
+          // }
         } else {
           AuthStore.isAuthenticated.set(true);
           AuthStore.accessToken.set($session.access_token);
@@ -420,9 +443,9 @@
         error: "auth_server_conn_error",
         error_description: "Auth Server Connection Error",
       });
-      if (window.location.toString().includes("event=logout")) {
-        window.location.assign($page.path);
-      }
+      // if (window.location.toString().includes("event=logout")) {
+      //   window.location.assign($page.path);
+      // }
     }
   }
   onMount(handleMount);

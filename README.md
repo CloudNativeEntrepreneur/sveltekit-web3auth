@@ -8,7 +8,6 @@ This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth se
     [] Offline Auth server error handling
     [] Setting valid user information ( access_token, refresh_token, userid etc. ) in form of cookies
     [] Populating session variable with user information
-    [] If Auth server has redirected to application, creates a backchannel machine to machine request for exchanging auth_code with access_token.
 
 When the client side kicks in, it:
 
@@ -239,7 +238,7 @@ export const getSession: GetSession = async (
 
 ![Keycloak Auth](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/keycloak_redirect_page.png?raw=true)
 
-### Auth Complete with backchannel token exchange and client hydrated with access_token
+### Auth Complete - client hydrated with access_token
 
 ![Index page with JWT](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/Index_page_with_token.png?raw=true)
 
