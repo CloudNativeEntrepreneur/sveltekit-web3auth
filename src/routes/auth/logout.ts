@@ -5,16 +5,11 @@ import type { RequestHandler } from "@sveltejs/kit";
  * @type {import('@sveltejs/kit').RequestHandler}
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
-  const { auth } = request.body as any;
-  const user = JSON.parse(
-    atob(auth.accessToken.token.split(".")[1]).toString()
-  );
-  console.log("auth/login", { user });
-
+  console.log("/auth/logout");
   let cookie = `userInfo=${JSON.stringify({
-    userid: user.publicAddress,
-    user,
-    refresh_token: auth.refreshToken.token,
+    userid: null,
+    user: null,
+    refresh_token: null,
   })};`;
 
   const response = {
@@ -26,10 +21,9 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
     },
   };
 
-  request.locals.userid = user.publicAddress;
-  request.locals.user = user;
-  request.locals.access_token = auth.accessToken.token;
-  request.locals.refresh_token = auth.refreshToken.token;
-
+  request.locals.userid = null;
+  request.locals.user = null;
+  request.locals.access_token = null;
+  request.locals.refresh_token = null;
   return response;
 };
