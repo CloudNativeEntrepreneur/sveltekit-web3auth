@@ -1,6 +1,6 @@
 # sveltekit + web3 Auth
 
-This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server (Keycloak in our instance). Sveltekit hooks take care of :
+This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server. Sveltekit hooks take care of :
 
     [] Silent Refresh Workflow
     [] Validating the client access_token validity
