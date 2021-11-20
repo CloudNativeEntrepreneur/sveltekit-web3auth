@@ -7,7 +7,7 @@ import type {
 import { parseCookie } from "./cookie";
 import { isTokenExpired } from "./jwt";
 import {
-  introspectWeb3AuthToken,
+  // introspectWeb3AuthToken,
   renewWeb3AuthToken,
 } from "./api";
 import {
@@ -20,10 +20,9 @@ import {
 import { config } from "./config";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
-const { clientId, issuer, redirectUri } = config;
+const { clientId, issuer } = config;
 
 const web3AuthBaseUrl = issuer;
-let appRedirectUrl = redirectUri;
 
 export const getUserSession: GetUserSessionFn = async (
   request: ServerRequest<Locals>,
@@ -31,7 +30,6 @@ export const getUserSession: GetUserSessionFn = async (
 ) => {
   console.log("hooks: getUserSession", { locals: request.locals });
   try {
-
     // TODO: Tokens have no expiration currently, so introspection never happens
     if (request.locals?.access_token) {
       console.log("hooks: getUserSession: has access token");
@@ -40,29 +38,28 @@ export const getUserSession: GetUserSessionFn = async (
         request.locals.userid &&
         !isTokenExpired(request.locals.access_token)
       ) {
-
         let isTokenActive = true;
-        console.log("hooks: getUserSession: access token appears active");
-        try {
-          console.log("hooks: getUserSession: introspecting token");
-          const tokenIntrospect = await introspectWeb3AuthToken(
-            request.locals.access_token,
-            web3AuthBaseUrl,
-            clientId,
-            clientSecret,
-            request.locals.user.preferred_username
-          );
-          isTokenActive = Object.keys(tokenIntrospect).includes("active")
-            ? tokenIntrospect.active
-            : false;
-          console.log("token active ", isTokenActive);
-        } catch (e) {
-          isTokenActive = false;
-          console.error("Error while fetching introspect details", e);
-        }
+        // console.log("hooks: getUserSession: access token appears active");
+        // try {
+        //   console.log("hooks: getUserSession: introspecting token");
+        //   const tokenIntrospect = await introspectWeb3AuthToken(
+        //     request.locals.access_token,
+        //     web3AuthBaseUrl,
+        //     clientId,
+        //     clientSecret,
+        //     request.locals.user.preferred_username
+        //   );
+        //   isTokenActive = Object.keys(tokenIntrospect).includes("active")
+        //     ? tokenIntrospect.active
+        //     : false;
+        //   console.log("token active ", isTokenActive);
+        // } catch (e) {
+        //   isTokenActive = false;
+        //   console.error("Error while fetching introspect details", e);
+        // }
 
         if (isTokenActive) {
-          console.log("hooks: getUserSession: token active after introspection - returning");
+          console.log("hooks: getUserSession: token active - returning");
           return {
             user: { ...request.locals.user },
             access_token: request.locals.access_token,
@@ -277,7 +274,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   const userJsonParseFailed = parseUser(request, userInfo);
 
   // const tokenExpired = isTokenExpired(request.locals.access_token);
-  const tokenExpired = false
+  const tokenExpired = false;
   const beforeAccessToken = request.locals.access_token;
 
   console.log("hooks: userDetailsGenerator: before token", {
