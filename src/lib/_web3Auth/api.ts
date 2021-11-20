@@ -85,46 +85,46 @@ export async function renewWeb3AuthToken(
   // }
 }
 
-export async function introspectWeb3AuthToken(
-  access_token: string,
-  web3AuthBaseUrl: string,
-  clientId: string,
-  clientSecret: string,
-  username: string
-): Promise<any> {
-  let formBody = [
-    "token=" + access_token,
-    "client_id=" + clientId,
-    "client_secret=" + clientSecret,
-    "username=" + username,
-  ];
+// export async function introspectWeb3AuthToken(
+//   access_token: string,
+//   web3AuthBaseUrl: string,
+//   clientId: string,
+//   clientSecret: string,
+//   username: string
+// ): Promise<any> {
+//   let formBody = [
+//     "token=" + access_token,
+//     "client_id=" + clientId,
+//     "client_secret=" + clientSecret,
+//     "username=" + username,
+//   ];
 
-  if (!access_token) {
-    const error_data: Web3AuthResponse = {
-      error: "invalid_grant",
-      error_description: "Invalid tokens",
-      access_token: null,
-      refresh_token: null,
-      id_token: null,
-    };
-    return error_data;
-  }
+//   if (!access_token) {
+//     const error_data: Web3AuthResponse = {
+//       error: "invalid_grant",
+//       error_description: "Invalid tokens",
+//       access_token: null,
+//       refresh_token: null,
+//       id_token: null,
+//     };
+//     return error_data;
+//   }
 
-  const res = await fetch(`${web3AuthBaseUrl}/token/introspect`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: formBody.join("&"),
-  });
+//   const res = await fetch(`${web3AuthBaseUrl}/token/introspect`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded",
+//     },
+//     body: formBody.join("&"),
+//   });
 
-  if (res.ok) {
-    const tokenIntrospect = await res.json();
-    return tokenIntrospect;
-  } else {
-    const data: Web3AuthResponse = await res.json();
-    console.log("introspect response not ok");
-    console.log(data);
-    return data;
-  }
-}
+//   if (res.ok) {
+//     const tokenIntrospect = await res.json();
+//     return tokenIntrospect;
+//   } else {
+//     const data: Web3AuthResponse = await res.json();
+//     console.log("introspect response not ok");
+//     console.log(data);
+//     return data;
+//   }
+// }
