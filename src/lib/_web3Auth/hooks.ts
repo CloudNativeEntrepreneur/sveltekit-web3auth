@@ -7,7 +7,6 @@ import type {
 import { parseCookie } from "./cookie";
 import { isTokenExpired } from "./jwt";
 import {
-  initiateBackChannelWeb3AuthLogout,
   introspectWeb3AuthToken,
   renewWeb3AuthToken,
 } from "./api";

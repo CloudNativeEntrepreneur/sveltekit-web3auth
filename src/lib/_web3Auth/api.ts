@@ -1,49 +1,5 @@
 import type { Web3AuthFailureResponse, Web3AuthResponse } from "../types";
 
-export async function initiateBackChannelWeb3AuthLogout(
-  access_token: string,
-  clientId: string,
-  clientSecret: string,
-  web3AuthBaseUrl: string,
-  refresh_token: string
-): Promise<Web3AuthFailureResponse> {
-  let formBody = [
-    "client_id=" + clientId,
-    "client_secret=" + clientSecret,
-    "refresh_token=" + refresh_token,
-  ];
-
-  if (!access_token || !refresh_token) {
-    const error_data = {
-      error: "invalid_grant",
-      error_description: "Invalid tokens",
-    };
-    return error_data;
-  }
-
-  const res = await fetch(`${web3AuthBaseUrl}/logout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Bearer ${access_token}`,
-    },
-    body: formBody.join("&"),
-  });
-
-  if (res.ok) {
-    return {
-      error: null,
-      error_description: null,
-    };
-  } else {
-    const error_data: Web3AuthResponse = await res.json();
-    console.log("logout response not ok");
-    console.log(error_data);
-    console.log(formBody.join("&"));
-    return error_data;
-  }
-}
-
 export const handleAuthenticate =
   (issuer) =>
   ({
