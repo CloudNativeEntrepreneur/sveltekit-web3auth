@@ -10,12 +10,7 @@
   import { handleAuthenticate, handleSignup } from "./api";
   import { handleSignMessage } from "./metamask";
 
-  console.log("Web3Auth module loading");
-  // TODO: this LS key is temporary - at least it's current value, and likely how it's used
-  const LS_KEY = "login-with-metamask:auth";
-
   let web3;
-  // let web3: Web3 | undefined = undefined; // Will hold the web3 instance
 
   export const WEB3AUTH_CONTEXT_CLIENT_PROMISE = {};
   export const WEB3AUTH_CONTEXT_REDIRECT_URI: string = "";
@@ -52,7 +47,6 @@
     delete user.payload;
     localStorage.removeItem("user_logout");
     localStorage.setItem("user_login", JSON.stringify(user));
-    localStorage.setItem(LS_KEY, JSON.stringify(auth));
     AuthStore.isAuthenticated.set(true);
     AuthStore.accessToken.set(auth.accessToken.token);
     AuthStore.refreshToken.set(auth.refreshToken.token);
@@ -67,16 +61,6 @@
       },
       method: "POST",
     }).then((response) => response.json());
-
-    // document.cookie = `userInfoBrowser=${JSON.stringify({
-    //   userid: publicAddress,
-    // user: JSON.parse(
-    //   atob(auth.accessToken.token.split(".")[1]).toString()
-    // ),
-    //   refresh_token: auth.refreshToken.token
-    // })};`
-    console.log("You bastard. You're in");
-    console.log(auth);
   };
 
   async function metaMaskLogin({ issuer, session }) {
@@ -204,8 +188,6 @@
     const web3Auth_func = await web3AuthPromise;
     const web3Params = web3Auth_func();
     // TODO: potential improvement - notify auth server to end session
-
-    window.localStorage.removeItem(LS_KEY);
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
     AuthStore.accessToken.set(null);
@@ -213,6 +195,21 @@
     AuthStore.isAuthenticated.set(false);
     AuthStore.isLoading.set(false);
     window.localStorage.setItem("user_logout", "true");
+
+    try {
+      let result = await fetch('/auth/logout', {
+        body: JSON.stringify({}),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      let json = await result.json()
+
+      console.log('Log out', json)
+    } catch (err) {
+      console.error('Error logging out', err)
+    }
 
     if (postLogoutRedirectURI) {
       console.log("post_logout_redirect", postLogoutRedirectURI);
