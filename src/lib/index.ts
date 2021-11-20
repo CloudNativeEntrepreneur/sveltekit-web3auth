@@ -19,7 +19,6 @@ export { default as LoginButton } from "./_web3Auth/LoginButton.svelte";
 export { default as LogoutButton } from "./_web3Auth/LogoutButton.svelte";
 export { default as ProtectedRoute } from "./_web3Auth/ProtectedRoute.svelte";
 export {
-  initiateBackChannelWeb3AuthLogout,
   renewWeb3AuthToken,
   introspectWeb3AuthToken,
 } from "./_web3Auth/api";
