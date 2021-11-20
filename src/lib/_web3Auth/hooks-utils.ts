@@ -5,6 +5,7 @@ export const injectCookies = (
   request: ServerRequest<Locals>,
   response: ServerResponse
 ) => {
+  console.log("injectCookies: starting...", { locals: request.locals });
   let responseCookies = {};
   let serialized_user = null;
 
@@ -13,6 +14,7 @@ export const injectCookies = (
   } catch {
     request.locals.user = null;
   }
+
   responseCookies = {
     userid: `${request.locals.userid}`,
     user: `${serialized_user}`,
@@ -29,12 +31,14 @@ export const injectCookies = (
 };
 
 export const isAuthInfoInvalid = (obj) => {
+  console.log("isAuthInfoInvalid: ", { obj });
   return (
     !obj?.userid || !obj?.access_token || !obj?.refresh_token || !obj?.user
   );
 };
 
 export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
+  console.log("parseUser", { userInfo });
   let userJsonParseFailed = false;
   try {
     if (request.headers?.user) {
@@ -68,6 +72,7 @@ export const populateRequestLocals = (
   userInfo,
   defaultValue
 ) => {
+  console.log("populateRequestLocals", { keyName, userInfo, defaultValue });
   if (request.headers[keyName]) {
     request.locals[keyName] = request.headers[keyName];
   } else {
@@ -88,6 +93,10 @@ export const populateResponseHeaders = (
   request: ServerRequest<Locals>,
   response: ServerResponse
 ) => {
+  console.log("populateResponseHeaders", {
+    requestLocals: request.locals,
+    requestHeaders: request.headers,
+  });
   if (request.locals.user) {
     response.headers["user"] = `${JSON.stringify(request.locals.user)}`;
   }
@@ -102,5 +111,10 @@ export const populateResponseHeaders = (
   if (request.locals.refresh_token) {
     response.headers["refresh_token"] = `${request.locals.refresh_token}`;
   }
+
+  console.log("populateResponseHeaders - end", {
+    requestLocals: request.locals,
+    requestHeaders: request.headers,
+  });
   return response;
 };

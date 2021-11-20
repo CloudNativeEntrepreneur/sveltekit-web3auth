@@ -8,10 +8,15 @@ const clientSecret =
   import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log("hooks: handle");
+  console.log("HOOKS: HANDLE", {
+    headers: request.headers,
+    locals: request.locals,
+  });
   // Initialization part
   const userGen = userDetailsGenerator(request, clientSecret);
   const { value, done } = await userGen.next();
+
+  console.log("hooks: handle: userGen", { value, done });
   if (done) {
     const response = value;
     return response;
