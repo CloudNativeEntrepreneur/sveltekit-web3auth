@@ -7,8 +7,8 @@ export type AuthError = {
 };
 export interface Locals {
   userid: string;
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   authError?: AuthError;
   user?: any;
   retries?: number;
@@ -28,9 +28,9 @@ export type Web3AuthContextClientFn = (
 export type Web3AuthContextClientPromise = Promise<Web3AuthContextClientFn>;
 
 export interface Web3AuthSuccessResponse {
-  access_token: string;
-  id_token: string;
-  refresh_token: string;
+  accessToken: string;
+  idToken: string;
+  refreshToken: string;
 }
 
 export interface Web3AuthFailureResponse extends AuthError {}
@@ -47,8 +47,8 @@ export interface UserDetailsGeneratorFn {
 }
 export interface UserSession {
   user: any;
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   userid: string;
   error?: AuthError | undefined;
   auth_server_online: boolean;

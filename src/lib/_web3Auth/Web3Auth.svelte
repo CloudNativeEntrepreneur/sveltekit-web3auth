@@ -39,9 +39,7 @@
   };
 
   const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
-    const user = JSON.parse(
-      atob(auth.accessToken.split(".")[1]).toString()
-    );
+    const user = JSON.parse(atob(auth.accessToken.split(".")[1]).toString());
     delete user.iat;
     // TODO: user.payload is temp for metamask login react demo
     delete user.payload;
@@ -159,8 +157,8 @@
         } else {
           AuthStore.isLoading.set(false);
           AuthStore.isAuthenticated.set(true);
-          AuthStore.accessToken.set(session.access_token);
-          AuthStore.refreshToken.set(session.refresh_token);
+          AuthStore.accessToken.set(session.accessToken);
+          AuthStore.refreshToken.set(session.refreshToken);
           AuthStore.authError.set(null);
           if (window.location.toString().includes("code=")) {
             window.location.assign(page.path);
@@ -197,18 +195,18 @@
     window.localStorage.setItem("user_logout", "true");
 
     try {
-      let result = await fetch('/auth/logout', {
+      let result = await fetch("/auth/logout", {
         body: JSON.stringify({}),
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
       });
-      let json = await result.json()
+      let json = await result.json();
 
-      console.log('Log out', json)
+      console.log("Log out", json);
     } catch (err) {
-      console.error('Error logging out', err)
+      console.error("Error logging out", err);
     }
 
     if (postLogoutRedirectURI) {
@@ -250,7 +248,7 @@
   export async function silentRefresh(oldRefreshToken: string) {
     console.log("Web3Auth:silentRefresh");
     try {
-      const reqBody = `refresh_token=${oldRefreshToken}`;
+      const reqBody = `refreshToken=${oldRefreshToken}`;
       const res = await fetch(refreshTokenEndpoint, {
         method: "POST",
         headers: {
@@ -269,12 +267,12 @@
           };
         }
 
-        const { access_token, refresh_token } = resData;
+        const { accessToken, refreshToken } = resData;
 
-        AuthStore.accessToken.set(access_token);
-        AuthStore.refreshToken.set(refresh_token);
+        AuthStore.accessToken.set(accessToken);
+        AuthStore.refreshToken.set(refreshToken);
 
-        const jwtData = JSON.parse(atob(access_token.split(".")[1]).toString());
+        const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
         const tokenSkew = 10; // 10 seconds before actual token expiry
         const skewedTimeoutDuration =
           jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
@@ -289,7 +287,7 @@
 
         if (timeoutDuration > 0) {
           tokenTimeoutObj = setTimeout(async () => {
-            await silentRefresh(refresh_token);
+            await silentRefresh(refreshToken);
           }, timeoutDuration);
         } else {
           throw {
@@ -401,10 +399,10 @@
           // }
         } else {
           AuthStore.isAuthenticated.set(true);
-          AuthStore.accessToken.set($session.access_token);
-          AuthStore.refreshToken.set($session.refresh_token);
+          AuthStore.accessToken.set($session.accessToken);
+          AuthStore.refreshToken.set($session.refreshToken);
           const jwtData = JSON.parse(
-            atob($session.access_token.split(".")[1]).toString()
+            atob($session.accessToken.split(".")[1]).toString()
           );
           const tokenSkew = 10; // 10 seconds before actual token expiry
           const skewedTimeoutDuration =
@@ -414,7 +412,7 @@
               ? skewedTimeoutDuration
               : skewedTimeoutDuration + tokenSkew * 1000;
           tokenTimeoutObj = setTimeout(async () => {
-            await silentRefresh($session.refresh_token);
+            await silentRefresh($session.refreshToken);
           }, timeoutDuration);
           AuthStore.authError.set(null);
           if (window.location.toString().includes("code=")) {

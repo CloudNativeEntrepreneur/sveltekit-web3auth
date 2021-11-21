@@ -12,24 +12,24 @@
     LogoutButton,
   } from "$lib";
 
-  let access_token_elem;
-  let is_access_token_copied = false;
+  let accessTokenElement;
+  let isAccessTokenCopied = false;
   function copyAccessTokenToClipboard() {
-    if (access_token_elem) {
+    if (accessTokenElement) {
       try {
         const selection = window.getSelection();
         const range = document.createRange();
-        range.selectNodeContents(access_token_elem);
+        range.selectNodeContents(accessTokenElement);
         selection.removeAllRanges();
         selection.addRange(range);
         document.execCommand("copy");
         selection.removeAllRanges();
-        is_access_token_copied = true;
+        isAccessTokenCopied = true;
         setTimeout(() => {
-          is_access_token_copied = false;
+          isAccessTokenCopied = false;
         }, 1000);
       } catch (e) {
-        console.log(access_token_elem);
+        console.log(accessTokenElement);
         console.error(e);
       }
     }
@@ -54,7 +54,7 @@
         <p
           access-token
           class="break-words w-100 max-w-5xl m-2 border-none overflow-visible font-mono text-gray-600"
-          bind:this={access_token_elem}
+          bind:this={accessTokenElement}
         >
           {$accessToken}
         </p>
@@ -63,7 +63,7 @@
             class="btn btn-primary"
             on:click|preventDefault={copyAccessTokenToClipboard}>Copy</button
           >
-          {#if is_access_token_copied}
+          {#if isAccessTokenCopied}
             <div class="bg-gray-800 text-green-300 rounded-md p-2 text-xs">
               Copied!
             </div>

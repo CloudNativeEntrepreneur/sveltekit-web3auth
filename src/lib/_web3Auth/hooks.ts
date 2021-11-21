@@ -31,39 +31,21 @@ export const getUserSession: GetUserSessionFn = async (
   console.log("hooks: getUserSession", { locals: request.locals });
   try {
     // TODO: Tokens have no expiration currently, so introspection never happens
-    if (request.locals?.access_token) {
+    if (request.locals?.accessToken) {
       console.log("hooks: getUserSession: has access token");
       if (
         request.locals.user &&
         request.locals.userid &&
-        !isTokenExpired(request.locals.access_token)
+        !isTokenExpired(request.locals.accessToken)
       ) {
         let isTokenActive = true;
-        // console.log("hooks: getUserSession: access token appears active");
-        // try {
-        //   console.log("hooks: getUserSession: introspecting token");
-        //   const tokenIntrospect = await introspectWeb3AuthToken(
-        //     request.locals.access_token,
-        //     web3AuthBaseUrl,
-        //     clientId,
-        //     clientSecret,
-        //     request.locals.user.preferred_username
-        //   );
-        //   isTokenActive = Object.keys(tokenIntrospect).includes("active")
-        //     ? tokenIntrospect.active
-        //     : false;
-        //   console.log("token active ", isTokenActive);
-        // } catch (e) {
-        //   isTokenActive = false;
-        //   console.error("Error while fetching introspect details", e);
-        // }
 
         if (isTokenActive) {
           console.log("hooks: getUserSession: token active - returning");
           return {
             user: { ...request.locals.user },
-            access_token: request.locals.access_token,
-            refresh_token: request.locals.refresh_token,
+            accessToken: request.locals.accessToken,
+            refreshToken: request.locals.refreshToken,
             userid: request.locals.user.sub,
             auth_server_online: true,
           };
@@ -92,7 +74,7 @@ export const getUserSession: GetUserSessionFn = async (
       const res = await fetch(`${web3AuthBaseUrl}/userinfo`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${request.locals.access_token}`,
+          Authorization: `Bearer ${request.locals.accessToken}`,
         },
       });
 
@@ -108,8 +90,8 @@ export const getUserSession: GetUserSessionFn = async (
             // like access tokens etc
             ...data,
           },
-          access_token: request.locals.access_token,
-          refresh_token: request.locals.refresh_token,
+          accessToken: request.locals.accessToken,
+          refreshToken: request.locals.refreshToken,
           userid: data.sub,
           auth_server_online: true,
         };
@@ -124,10 +106,10 @@ export const getUserSession: GetUserSessionFn = async (
           ) {
             console.log(
               "old token expiry",
-              isTokenExpired(request.locals.access_token)
+              isTokenExpired(request.locals.accessToken)
             );
             const newTokenData = await renewWeb3AuthToken(
-              request.locals.refresh_token,
+              request.locals.refreshToken,
               web3AuthBaseUrl,
               clientId,
               clientSecret
@@ -141,7 +123,7 @@ export const getUserSession: GetUserSessionFn = async (
                   : "Unable to retrieve user Info",
               };
             } else {
-              request.locals.access_token = newTokenData.access_token;
+              request.locals.accessToken = newTokenData.accessToken;
               request.locals.retries = request.locals.retries + 1;
               return await getUserSession(request, clientSecret);
             }
@@ -154,7 +136,7 @@ export const getUserSession: GetUserSessionFn = async (
               : "Unable to retrieve user Info",
           };
         } catch (e) {
-          // console.error('Error while refreshing access_token; access_token is invalid', e);
+          // console.error('Error while refreshing accessToken; accessToken is invalid', e);
           throw {
             ...e,
           };
@@ -169,10 +151,10 @@ export const getUserSession: GetUserSessionFn = async (
         ) {
           console.log(
             "old token expiry",
-            isTokenExpired(request.locals.access_token)
+            isTokenExpired(request.locals.accessToken)
           );
           const newTokenData = await renewWeb3AuthToken(
-            request.locals.refresh_token,
+            request.locals.refreshToken,
             web3AuthBaseUrl,
             clientId,
             clientSecret
@@ -184,14 +166,14 @@ export const getUserSession: GetUserSessionFn = async (
               error_description: newTokenData.error_description,
             };
           } else {
-            request.locals.access_token = newTokenData.access_token;
+            request.locals.accessToken = newTokenData.accessToken;
             request.locals.retries = request.locals.retries + 1;
             return await getUserSession(request, clientSecret);
           }
         }
       } catch (e) {
         console.error(
-          "Error while refreshing access_token; access_token is missing",
+          "Error while refreshing accessToken; accessToken is missing",
           e
         );
       }
@@ -219,8 +201,8 @@ export const getUserSession: GetUserSessionFn = async (
     }
   } catch (err) {
     console.error("hooks: getUserSession", err);
-    request.locals.access_token = "";
-    request.locals.refresh_token = "";
+    request.locals.accessToken = "";
+    request.locals.refreshToken = "";
     request.locals.userid = "";
     request.locals.user = null;
     if (err?.error) {
@@ -231,8 +213,8 @@ export const getUserSession: GetUserSessionFn = async (
     }
     return {
       user: null,
-      access_token: null,
-      refresh_token: null,
+      accessToken: null,
+      refreshToken: null,
       userid: null,
       error: request.locals.authError?.error ? request.locals.authError : null,
       auth_server_online: err.error !== "auth_server_conn_error" ? true : false,
@@ -264,8 +246,8 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   console.log("hooks: userDetailsGenerator:", { userInfo });
 
   populateRequestLocals(request, "userid", userInfo, "");
-  populateRequestLocals(request, "access_token", userInfo, null);
-  populateRequestLocals(request, "refresh_token", userInfo, null);
+  populateRequestLocals(request, "accessToken", userInfo, null);
+  populateRequestLocals(request, "refreshToken", userInfo, null);
 
   let ssr_redirect = false;
   let ssr_redirect_uri = "/";
@@ -273,9 +255,9 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   // Parsing user object
   const userJsonParseFailed = parseUser(request, userInfo);
 
-  // const tokenExpired = isTokenExpired(request.locals.access_token);
-  const tokenExpired = false;
-  const beforeAccessToken = request.locals.access_token;
+  const tokenExpired = isTokenExpired(request.locals.accessToken);
+  // const tokenExpired = false;
+  const beforeAccessToken = request.locals.accessToken;
 
   console.log("hooks: userDetailsGenerator: before token", {
     tokenExpired,
@@ -285,7 +267,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   request = { ...request, ...(yield) };
 
   let response: ServerResponse = { status: 200, headers: {} };
-  const afterAccessToken = request.locals.access_token;
+  const afterAccessToken = request.locals.accessToken;
 
   console.log("hooks: userDetailsGenerator: after token", {
     afterAccessToken,

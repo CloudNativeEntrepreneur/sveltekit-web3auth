@@ -9,7 +9,7 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
   let cookie = `userInfo=${JSON.stringify({
     userid: null,
     user: null,
-    refresh_token: null,
+    refreshToken: null,
   })};`;
 
   const response = {
@@ -23,7 +23,7 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
 
   request.locals.userid = null;
   request.locals.user = null;
-  request.locals.access_token = null;
-  request.locals.refresh_token = null;
+  request.locals.accessToken = null;
+  request.locals.refreshToken = null;
   return response;
 };

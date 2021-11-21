@@ -14,9 +14,9 @@ const clientSecret =
  * @type {import('@sveltejs/kit').RequestHandler}
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
-  console.log("auth/refresh_token");
+  console.log("auth/refresh-token");
   const data = await renewWeb3AuthToken(
-    request.body.get("refresh_token"),
+    request.body.get("refreshToken"),
     oidcBaseUrl,
     clientId,
     clientSecret

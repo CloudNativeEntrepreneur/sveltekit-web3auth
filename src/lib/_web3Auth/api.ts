@@ -1,4 +1,5 @@
 import type { Web3AuthFailureResponse, Web3AuthResponse } from "../types";
+import { isTokenExpired } from "./jwt";
 
 export const handleAuthenticate =
   (issuer) =>
@@ -27,33 +28,26 @@ export const handleSignup = (issuer: string) => (publicAddress: string) =>
   }).then((response) => response.json());
 
 export async function renewWeb3AuthToken(
-  refresh_token: string,
+  refreshToken: string,
   web3AuthBaseUrl: string,
   clientId: string,
   clientSecret: string
 ): Promise<Web3AuthResponse> {
-  // let formBody = [
-  //   "refresh_token=" + refresh_token,
-  //   "client_id=" + clientId,
-  //   "client_secret=" + clientSecret,
-  //   "grant_type=refresh_token",
-  // ];
-
-  if (!refresh_token) {
+  if (!refreshToken) {
     const error_data: Web3AuthResponse = {
       error: "invalid_grant",
       error_description: "Invalid tokens",
-      access_token: null,
-      refresh_token: null,
-      id_token: null,
+      accessToken: null,
+      refreshToken: null,
+      idToken: null,
     };
     return error_data;
   }
 
   const data: Web3AuthResponse = {
-    access_token: refresh_token,
-    refresh_token: refresh_token,
-    id_token: refresh_token,
+    accessToken: refreshToken,
+    refreshToken: refreshToken,
+    idToken: refreshToken,
     error: null,
     error_description: null,
   };
@@ -63,18 +57,20 @@ export async function renewWeb3AuthToken(
   // const res = await fetch(`${web3AuthBaseUrl}/token`, {
   //   method: "POST",
   //   headers: {
-  //     "Content-Type": "application/x-www-form-urlencoded",
+  //     "Content-Type": "application/json",
   //   },
-  //   body: formBody.join("&"),
+  //   body: JSON.stringify({
+  //     refreshToken: refreshToken
+  //   }),
   // });
 
   // if (res.ok) {
   //   const newToken = await res.json();
   //   const data: Web3AuthResponse = {
   //     ...newToken,
-  //     refresh_token: isTokenExpired(refresh_token)
-  //       ? newToken.refresh_token
-  //       : refresh_token,
+  //     refreshToken: isTokenExpired(refreshToken)
+  //       ? newToken.refreshToken
+  //       : refreshToken,
   //   };
   //   return data;
   // } else {
@@ -84,47 +80,3 @@ export async function renewWeb3AuthToken(
   //   return data;
   // }
 }
-
-// export async function introspectWeb3AuthToken(
-//   access_token: string,
-//   web3AuthBaseUrl: string,
-//   clientId: string,
-//   clientSecret: string,
-//   username: string
-// ): Promise<any> {
-//   let formBody = [
-//     "token=" + access_token,
-//     "client_id=" + clientId,
-//     "client_secret=" + clientSecret,
-//     "username=" + username,
-//   ];
-
-//   if (!access_token) {
-//     const error_data: Web3AuthResponse = {
-//       error: "invalid_grant",
-//       error_description: "Invalid tokens",
-//       access_token: null,
-//       refresh_token: null,
-//       id_token: null,
-//     };
-//     return error_data;
-//   }
-
-//   const res = await fetch(`${web3AuthBaseUrl}/token/introspect`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/x-www-form-urlencoded",
-//     },
-//     body: formBody.join("&"),
-//   });
-
-//   if (res.ok) {
-//     const tokenIntrospect = await res.json();
-//     return tokenIntrospect;
-//   } else {
-//     const data: Web3AuthResponse = await res.json();
-//     console.log("introspect response not ok");
-//     console.log(data);
-//     return data;
-//   }
-// }

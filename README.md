@@ -3,10 +3,10 @@
 This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server. Sveltekit hooks take care of :
 
     [] Silent Refresh Workflow
-    [] Validating the client access_token validity
+    [] Validating the client accessToken validity
     [] Renewing the token in case of token expiry
     [] Offline Auth server error handling
-    [] Setting valid user information ( access_token, refresh_token, userid etc. ) in form of cookies
+    [] Setting valid user information ( accessToken, refreshToken, userid etc. ) in form of cookies
     [] Populating session variable with user information
 
 When the client side kicks in, it:
@@ -50,7 +50,7 @@ VITE_WEB3_AUTH_REDIRECT_URI = "http://localhost:3000";
 VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI = "http://localhost:3000";
 VITE_WEB3_AUTH_CLIENT_SCOPE = "openid profile email hasura-claims";
 VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES = "5";
-VITE_WEB3_REFRESH_TOKEN_ENDPOINT = "/auth/refresh_token";
+VITE_WEB3_REFRESH_TOKEN_ENDPOINT = "/auth/refresh-token";
 VITE_WEB3_REFRESH_PAGE_ON_SESSION_TIMEOUT = true;
 ```
 
@@ -72,8 +72,8 @@ interface ImportMetaEnv {
 
 ### REFESH_TOKEN_ENDPOINT
 
-Create a refresh_token endpoint as set in .env file (VITE_OIDC_REFRESH_TOKEN_ENDPOINT) we have set /auth/refresh_token.
-As such, create file src/routes/auth/refresh_token.ts
+Create a refreshToken endpoint as set in .env file (VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT) we have set /auth/refresh-token.
+As such, create file src/routes/auth/refresh-token.ts
 
 ```ts
 import { renewOIDCToken } from "sveltekit-web3auth";
@@ -82,18 +82,18 @@ import type { Locals } from "sveltekit-web3auth/types";
 import type { RequestHandler } from "@sveltejs/kit";
 
 const oidcBaseUrl = `${
-  import.meta.env.VITE_OIDC_ISSUER
+  import.meta.env.VITE_WEB3_AUTH_ISSUER
 }/protocol/openid-connect`;
-const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
+const clientId = `${import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}`;
 const clientSecret =
-  process.env.VITE_OIDC_CLIENT_SECRET ||
-  import.meta.env.VITE_OIDC_CLIENT_SECRET;
+  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
+  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 /**
  * @type {import('@sveltejs/kit').RequestHandler}
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
   const data = await renewOIDCToken(
-    request.body.get("refresh_token"),
+    request.body.get("refreshToken"),
     oidcBaseUrl,
     clientId,
     clientSecret
@@ -119,8 +119,8 @@ import type { Locals } from "sveltekit-web3auth/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
 const clientSecret =
-  process.env.VITE_OIDC_CLIENT_SECRET ||
-  import.meta.env.VITE_OIDC_CLIENT_SECRET;
+  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
+  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
   // Initialization part
@@ -174,13 +174,13 @@ export const getSession: GetSession = async (
 </script>
 
 <Keycloak
-  issuer="{import.meta.env.VITE_OIDC_ISSUER}"
-  clientId="{import.meta.env.VITE_OIDC_CLIENT_ID}"
-  scope="{import.meta.env.VITE_OIDC_CLIENT_SCOPE}"
-  redirectURI="{import.meta.env.VITE_OIDC_REDIRECT_URI}"
-  postLogoutRedirectURI="{import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}"
-  refreshTokenEndpoint="{import.meta.env.VITE_OIDC_REFRESH_TOKEN_ENDPOINT}"
-  refreshPageOnSessionTimeout="{import.meta.env.VITE_OIDC_REFRESH_PAGE_ON_SESSION_TIMEOUT}"
+  issuer="{import.meta.env.VITE_WEB3_AUTH_ISSUER}"
+  clientId="{import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}"
+  scope="{import.meta.env.VITE_WEB3_AUTH_CLIENT_SCOPE}"
+  redirectURI="{import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI}"
+  postLogoutRedirectURI="{import.meta.env.VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI}"
+  refreshTokenEndpoint="{import.meta.env.VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT}"
+  refreshPageOnSessionTimeout="{import.meta.env.VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT}"
 >
   <slot></slot>
 </Keycloak>
@@ -238,7 +238,7 @@ export const getSession: GetSession = async (
 
 ![Keycloak Auth](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/keycloak_redirect_page.png?raw=true)
 
-### Auth Complete - client hydrated with access_token
+### Auth Complete - client hydrated with accessToken
 
 ![Index page with JWT](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/Index_page_with_token.png?raw=true)
 

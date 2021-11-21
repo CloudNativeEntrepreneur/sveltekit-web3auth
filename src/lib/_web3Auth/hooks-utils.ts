@@ -19,7 +19,7 @@ export const injectCookies = (
     userid: `${request.locals.userid}`,
     user: `${serialized_user}`,
   };
-  responseCookies["refresh_token"] = `${request.locals.refresh_token}`;
+  responseCookies["refreshToken"] = `${request.locals.refreshToken}`;
   let cookieAtrributes = "Path=/; HttpOnly; SameSite=Lax;";
   if (request.locals?.cookieAttributes) {
     cookieAtrributes = request.locals.cookieAttributes;
@@ -32,9 +32,7 @@ export const injectCookies = (
 
 export const isAuthInfoInvalid = (obj) => {
   console.log("isAuthInfoInvalid: ", { obj });
-  return (
-    !obj?.userid || !obj?.access_token || !obj?.refresh_token || !obj?.user
-  );
+  return !obj?.userid || !obj?.accessToken || !obj?.refreshToken || !obj?.user;
 };
 
 export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
@@ -105,11 +103,11 @@ export const populateResponseHeaders = (
     response.headers["userid"] = `${request.locals.userid}`;
   }
 
-  if (request.locals.access_token) {
-    response.headers["access_token"] = `${request.locals.access_token}`;
+  if (request.locals.accessToken) {
+    response.headers["accessToken"] = `${request.locals.accessToken}`;
   }
-  if (request.locals.refresh_token) {
-    response.headers["refresh_token"] = `${request.locals.refresh_token}`;
+  if (request.locals.refreshToken) {
+    response.headers["refreshToken"] = `${request.locals.refreshToken}`;
   }
 
   console.log("populateResponseHeaders - end", {

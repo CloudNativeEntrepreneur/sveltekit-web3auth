@@ -15,7 +15,7 @@
       );
       const web3Auth_func = await web3AuthPromise;
       const web3Params = web3Auth_func($page.path, $page.params);
-      if (!$session?.user || !$session?.access_token || !$session?.user) {
+      if (!$session?.user || !$session?.accessToken || !$session?.user) {
         try {
           // console.log(redirect);
           // window.location.assign(redirect);
@@ -24,7 +24,7 @@
           console.error(e);
         }
       } else {
-        if (isTokenExpired($session.access_token)) {
+        if (isTokenExpired($session.accessToken)) {
           // console.log(redirect);
           // window.location.assign(redirect);
           console.log("AUTH HERE");
