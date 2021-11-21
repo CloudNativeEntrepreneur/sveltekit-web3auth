@@ -7,14 +7,14 @@ import type { RequestHandler } from "@sveltejs/kit";
 export const post: RequestHandler<Locals, FormData> = async (request) => {
   const { auth } = request.body as any;
   const user = JSON.parse(
-    atob(auth.accessToken.token.split(".")[1]).toString()
+    atob(auth.accessToken.split(".")[1]).toString()
   );
   console.log("auth/login", { user });
 
   let cookie = `userInfo=${JSON.stringify({
     userid: user.publicAddress,
     user,
-    refresh_token: auth.refreshToken.token,
+    refresh_token: auth.refreshToken,
   })};`;
 
   const response = {
@@ -28,8 +28,8 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
 
   request.locals.userid = user.publicAddress;
   request.locals.user = user;
-  request.locals.access_token = auth.accessToken.token;
-  request.locals.refresh_token = auth.refreshToken.token;
+  request.locals.access_token = auth.accessToken;
+  request.locals.refresh_token = auth.refreshToken;
 
   return response;
 };

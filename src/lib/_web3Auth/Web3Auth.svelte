@@ -40,7 +40,7 @@
 
   const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
     const user = JSON.parse(
-      atob(auth.accessToken.token.split(".")[1]).toString()
+      atob(auth.accessToken.split(".")[1]).toString()
     );
     delete user.iat;
     // TODO: user.payload is temp for metamask login react demo
@@ -48,8 +48,8 @@
     localStorage.removeItem("user_logout");
     localStorage.setItem("user_login", JSON.stringify(user));
     AuthStore.isAuthenticated.set(true);
-    AuthStore.accessToken.set(auth.accessToken.token);
-    AuthStore.refreshToken.set(auth.refreshToken.token);
+    AuthStore.accessToken.set(auth.accessToken);
+    AuthStore.refreshToken.set(auth.refreshToken);
     AuthStore.userInfo.set({
       publicAddress,
     });
