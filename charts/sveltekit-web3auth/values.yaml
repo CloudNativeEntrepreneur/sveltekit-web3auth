@@ -1,0 +1,38 @@
+# Default values for node projects.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+image:
+  repository: draft
+  tag: dev
+  pullPolicy: IfNotPresent
+
+# define environment variables here as a map of key: value
+env:
+
+service:
+  name: sveltekit-web3auth
+  internalPort: 3000
+
+knative: {}
+
+probePath: /
+livenessProbe:
+  initialDelaySeconds: 90
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+readinessProbe:
+  initialDelaySeconds: 90
+  failureThreshold: 1
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+
+resources:
+  limits:
+    cpu: '1'
+    memory: 1024Mi
+  requests:
+    cpu: 50m
+    memory: 256Mi
+

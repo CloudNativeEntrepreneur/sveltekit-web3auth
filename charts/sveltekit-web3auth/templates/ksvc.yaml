@@ -1,0 +1,47 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+  annotations:
+{{- if .Values.knative.subdomain }}
+    custom-hostname: {{ .Values.knative.subdomain }}
+{{- end }}
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+    spec:
+      containers:
+      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+        env:
+        - name: VITE_HASURA_GRAPHQL_URL
+          value: https://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+        - name: VITE_HASURA_GRAPHQL_INTERNAL_URL
+          value: https://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+        - name: VITE_HASURA_GRAPHQL_WS_URL
+          value: wss://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+{{- range $pkey, $pval := .Values.env }}
+        - name: {{ $pkey }}
+          value: {{ quote $pval }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.livenessProbe.probePath | default .Values.probePath }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.livenessProbe.probePath | default .Values.probePath }}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          successThreshold: {{ .Values.readinessProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
