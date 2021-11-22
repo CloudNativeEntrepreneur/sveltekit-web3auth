@@ -216,6 +216,46 @@
       console.log("no post logout redirect configured");
     }
   }
+
+  export const tokenRefresh = async (oldRefreshToken: string) => {
+    console.log("Web3Auth:tokenRefresh");
+    try {
+      const reqBody = `refreshToken=${oldRefreshToken}`;
+      const res = await fetch("/auth/refresh-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: reqBody,
+      });
+
+      if (res.ok) {
+        const resData = await res.json();
+
+        if (resData.error) {
+          throw {
+            error: "token_refresh_error",
+            error_description: "Unable to Refresh token",
+          };
+        }
+
+        const { accessToken, refreshToken } = resData;
+
+        AuthStore.accessToken.set(accessToken);
+        AuthStore.refreshToken.set(refreshToken);
+
+        return { accessToken, refreshToken }
+      }
+    } catch (e) {
+      AuthStore.accessToken.set(null);
+      AuthStore.refreshToken.set(null);
+      AuthStore.isAuthenticated.set(false);
+      AuthStore.authError.set({
+        error: e?.error,
+        error_description: e?.error_description,
+      });
+    }
+  }
 </script>
 
 <script lang="ts">
@@ -245,32 +285,10 @@
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
   let tokenTimeoutObj = null;
-  export async function silentRefresh(oldRefreshToken: string) {
+  async function silentRefresh(oldRefreshToken: string) {
     console.log("Web3Auth:silentRefresh");
     try {
-      const reqBody = `refreshToken=${oldRefreshToken}`;
-      const res = await fetch(refreshTokenEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: reqBody,
-      });
-
-      if (res.ok) {
-        const resData = await res.json();
-
-        if (resData.error) {
-          throw {
-            error: "token_refresh_error",
-            error_description: "Unable to Refresh token",
-          };
-        }
-
-        const { accessToken, refreshToken } = resData;
-
-        AuthStore.accessToken.set(accessToken);
-        AuthStore.refreshToken.set(refreshToken);
+        const { accessToken, refreshToken } = await tokenRefresh(oldRefreshToken)
 
         const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
         const tokenSkew = 10; // 10 seconds before actual token expiry
@@ -295,18 +313,10 @@
             error_description: "Session not active",
           };
         }
-      }
     } catch (e) {
       if (tokenTimeoutObj) {
         clearTimeout(tokenTimeoutObj);
       }
-      AuthStore.accessToken.set(null);
-      AuthStore.refreshToken.set(null);
-      AuthStore.isAuthenticated.set(false);
-      AuthStore.authError.set({
-        error: e?.error,
-        error_description: e?.error_description,
-      });
       if (refreshPageOnSessionTimeout) {
         window.location.assign($page.path);
       }

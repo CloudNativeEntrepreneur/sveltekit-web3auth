@@ -29,10 +29,13 @@ export const handleSignup = (issuer: string) => (publicAddress: string) =>
 
 export async function renewWeb3AuthToken(
   refreshToken: string,
-  web3AuthBaseUrl: string,
+  issuer: string,
   clientId: string,
   clientSecret: string
 ): Promise<Web3AuthResponse> {
+
+  console.log('web3Auth:api:renewWeb3AuthToken')
+
   if (!refreshToken) {
     const error_data: Web3AuthResponse = {
       error: "invalid_grant",
@@ -44,39 +47,37 @@ export async function renewWeb3AuthToken(
     return error_data;
   }
 
-  const data: Web3AuthResponse = {
-    accessToken: refreshToken,
-    refreshToken: refreshToken,
-    idToken: refreshToken,
-    error: null,
-    error_description: null,
-  };
+  // const data: Web3AuthResponse = {
+  //   accessToken: refreshToken,
+  //   refreshToken: refreshToken,
+  //   idToken: refreshToken,
+  //   error: null,
+  //   error_description: null,
+  // };
 
-  return data;
+  // return data;
 
-  // const res = await fetch(`${web3AuthBaseUrl}/token`, {
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  //   body: JSON.stringify({
-  //     refreshToken: refreshToken
-  //   }),
-  // });
+  const res = await fetch(`${issuer}/auth/auth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
 
-  // if (res.ok) {
-  //   const newToken = await res.json();
-  //   const data: Web3AuthResponse = {
-  //     ...newToken,
-  //     refreshToken: isTokenExpired(refreshToken)
-  //       ? newToken.refreshToken
-  //       : refreshToken,
-  //   };
-  //   return data;
-  // } else {
-  //   const data: Web3AuthResponse = await res.json();
-  //   console.log("renew response not ok");
-  //   console.log(data);
-  //   return data;
-  // }
+  console.log('web3Auth:api:renewWeb3AuthToken - res', res)
+
+  if (res.ok) {
+    const newTokens = await res.json();
+    console.log(newTokens)
+    const data: Web3AuthResponse = {
+      ...newTokens
+    };
+    return data;
+  } else {
+    const data: Web3AuthResponse = await res.json();
+    console.log("renew response not ok");
+    console.log(data);
+    return data;
+  }
 }
