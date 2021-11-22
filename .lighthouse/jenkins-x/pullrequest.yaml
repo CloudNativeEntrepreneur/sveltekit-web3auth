@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  creationTimestamp: null
+  name: pullrequest
+spec:
+  pipelineSpec:
+    tasks:
+    - name: from-build-pack
+      resources: {}
+      taskSpec:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "false"
+        stepTemplate:
+          image: uses:jenkins-x/jx3-pipeline-catalog/tasks/docker-helm/pullrequest.yaml@versionStream
+          name: ""
+          resources:
+            requests:
+              cpu: 400m
+              memory: 512Mi
+          workingDir: /workspace/source
+        steps:
+        - image: uses:jenkins-x/jx3-pipeline-catalog/tasks/git-clone/git-clone-pr.yaml@versionStream
+          name: ""
+          resources: {}
+        - name: jx-variables
+          resources: {}
+        - name: build-container-build
+          resources:
+            requests:
+              cpu: 1500m
+              memory: 1500Mi
+          env:
+          - name: KANIKO_FLAGS
+            value: --snapshotMode=redo
+        - image: ghcr.io/jenkins-x-plugins/jx-preview:0.0.192
+          name: promote-jx-preview
+          resources: {}
+          script: |
+            #!/usr/bin/env sh
+            source .jx/variables.sh
+            jx preview create --no-comment
+        - image: ghcr.io/jenkins-x/jx-boot:3.2.205
+          name: comment-with-link
+          resources: {}
+          script: |
+            #!/usr/bin/env sh
+            source .jx/variables.sh
+            export SVELTEKIT_WEB3AUTH_KSVC_URL=$(kubectl get ksvc -n $PREVIEW_NAMESPACE $REPO_NAME -o 'jsonpath={.status.url}')
+            jx gitops pr comment \
+              -c "🔥 PR Preview Environment is starting - if this is a new preview environment then SSL certs may take a few minutes to be provisioned... [sveltekit-web3auth]($SVELTEKIT_WEB3AUTH_KSVC_URL)" \
+              --repo $REPO_OWNER/$REPO_NAME \
+              --pr $PULL_NUMBER
+  podTemplate: {}
+  serviceAccountName: tekton-bot
+  timeout: 12h0m0s
+status: {}

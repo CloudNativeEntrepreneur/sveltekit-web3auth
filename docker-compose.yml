@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+
+  sveltekit-web3auth:
+    image: sveltekit-web3auth
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+    - 3000:3000
+    
