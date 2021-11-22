@@ -33,40 +33,48 @@ https://www.npmjs.com/package/sveltekit-web3auth
 # Usage
 
 <code>
-    npm i sveltekit-web3auth
+    npm i sveltekit-web3auth --save-dev
 </code>
 
-##
+## Server
+
+You can use this server: [CloudNativeEntrepreneur/web3-auth-service](https://github.com/CloudNativeEntrepreneur/web3-auth-service)
 
 ## Configuration
 
 Create an .env file in project root with following content
 
 ```ts
-VITE_WEB3_AUTH_ISSUER = "http://localhost:28080/auth/realms/hasura";
-VITE_WEB3_AUTH_CLIENT_ID = "hasura-app";
-VITE_WEB3_AUTH_CLIENT_SECRET = "1439e34f-343e-4f71-bbc7-cc602dced84a";
-VITE_WEB3_AUTH_REDIRECT_URI = "http://localhost:3000";
-VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI = "http://localhost:3000";
-VITE_WEB3_AUTH_CLIENT_SCOPE = "openid profile email hasura-claims";
-VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES = "5";
-VITE_WEB3_REFRESH_TOKEN_ENDPOINT = "/auth/refresh-token";
-VITE_WEB3_REFRESH_PAGE_ON_SESSION_TIMEOUT = true;
+VITE_WEB3_AUTH_ISSUER="http://localhost:8000"
+VITE_WEB3_AUTH_CLIENT_ID="local-public"
+VITE_WEB3_AUTH_CLIENT_SECRET="1439e34f-343e-4f71-bbc7-cc602dced84a"
+VITE_WEB3_AUTH_REDIRECT_URI="http://localhost:3000"
+VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI="http://localhost:3000"
+VITE_WEB3_AUTH_CLIENT_SCOPE="openid profile email roles"
+VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES="5"
+VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT="/auth/refresh-token"
+VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT=true
+VITE_HASURA_GRAPHQL_URL=http://hasura.127.0.0.1.sslip.io/v1/graphql
+VITE_HASURA_GRAPHQL_INTERNAL_URL=http://hasura.127.0.0.1.sslip.io/v1/graphql
+VITE_HASURA_GRAPHQL_WS_URL=ws://hasura.127.0.0.1.sslip.io/v1/graphql
 ```
 
 ### Inside your src/global.d.ts
 
 ```ts
 interface ImportMetaEnv {
-  VITE_WEB3_ISSUER: string;
-  VITE_WEB3_CLIENT_ID: string;
-  VITE_WEB3_CLIENT_SECRET: string;
-  VITE_WEB3_REDIRECT_URI: string;
-  VITE_WEB3_POST_LOGOUT_REDIRECT_URI: string;
-  VITE_WEB3_CLIENT_SCOPE: string;
-  VITE_WEB3_TOKEN_REFRESH_MAX_RETRIES: number;
-  VITE_WEB3_REFRESH_TOKEN_ENDPOINT: string;
-  VITE_WEB3_REFRESH_PAGE_ON_SESSION_TIMEOUT: boolean;
+  VITE_WEB3_AUTH_ISSUER: string;
+  VITE_WEB3_AUTH_CLIENT_ID: string;
+  VITE_WEB3_AUTH_CLIENT_SECRET: string;
+  VITE_WEB3_AUTH_REDIRECT_URI: string;
+  VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI?: string;
+  VITE_WEB3_AUTH_CLIENT_SCOPE: string;
+  VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES: number;
+  VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT: string;
+  VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT: boolean;
+  VITE_HASURA_GRAPHQL_URL: string;
+  VITE_HASURA_GRAPHQL_INTERNAL_URL: string;
+  VITE_HASURA_GRAPHQL_WS_URL: string;
 }
 ```
 
@@ -76,14 +84,12 @@ Create a refreshToken endpoint as set in .env file (VITE_WEB3_AUTH_REFRESH_TOKEN
 As such, create file src/routes/auth/refresh-token.ts
 
 ```ts
-import { renewOIDCToken } from "sveltekit-web3auth";
+import { renewWeb3AuthToken, parseCookie } from "$lib";
 
-import type { Locals } from "sveltekit-web3auth/types";
+import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 
-const oidcBaseUrl = `${
-  import.meta.env.VITE_WEB3_AUTH_ISSUER
-}/protocol/openid-connect`;
+const issuer = `${import.meta.env.VITE_WEB3_AUTH_ISSUER}`;
 const clientId = `${import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}`;
 const clientSecret =
   process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
@@ -92,9 +98,12 @@ const clientSecret =
  * @type {import('@sveltejs/kit').RequestHandler}
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
-  const data = await renewOIDCToken(
-    request.body.get("refreshToken"),
-    oidcBaseUrl,
+  const cookie: any = parseCookie(request.headers.cookie);
+  const { userInfo } = cookie;
+  const user = JSON.parse(userInfo);
+  const data = await renewWeb3AuthToken(
+    user.refreshToken,
+    issuer,
     clientId,
     clientSecret
   );
@@ -113,9 +122,8 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
 
 ```ts
 import type { Handle, GetSession } from "@sveltejs/kit";
-import { userDetailsGenerator, getUserSession } from "sveltekit-web3auth";
-import type { Locals } from "sveltekit-web3auth/types";
-
+import { userDetailsGenerator, getUserSession } from "$lib";
+import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
 const clientSecret =
@@ -123,9 +131,15 @@ const clientSecret =
   import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
+  console.log("HOOKS: HANDLE", {
+    headers: request.headers,
+    locals: request.locals,
+  });
   // Initialization part
   const userGen = userDetailsGenerator(request, clientSecret);
   const { value, done } = await userGen.next();
+
+  console.log("hooks: handle: userGen", { value, done });
   if (done) {
     const response = value;
     return response;
@@ -153,7 +167,6 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
     }
     response.headers = { ...response.headers, ...restHeaders };
   }
-  // Return response back
   return response;
 };
 
@@ -161,6 +174,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
+  console.log("hooks: getSession");
   const userSession = await getUserSession(request, clientSecret);
   return userSession;
 };
@@ -170,20 +184,23 @@ export const getSession: GetSession = async (
 
 ```html
 <script lang="ts">
-  import { Keycloak } from "sveltekit-web3auth";
+  import "../app.postcss";
+  import { Web3Auth } from "$lib";
 </script>
 
-<Keycloak
-  issuer="{import.meta.env.VITE_WEB3_AUTH_ISSUER}"
-  clientId="{import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}"
-  scope="{import.meta.env.VITE_WEB3_AUTH_CLIENT_SCOPE}"
-  redirectURI="{import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI}"
-  postLogoutRedirectURI="{import.meta.env.VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI}"
-  refreshTokenEndpoint="{import.meta.env.VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT}"
-  refreshPageOnSessionTimeout="{import.meta.env.VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT}"
+<Web3Auth
+  issuer={import.meta.env.VITE_WEB3_AUTH_ISSUER}
+  clientId={import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}
+  scope={import.meta.env.VITE_WEB3_AUTH_CLIENT_SCOPE}
+  redirectURI={import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI}
+  postLogoutRedirectURI={import.meta.env
+    .VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI}
+  refreshTokenEndpoint={import.meta.env.VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT}
+  refreshPageOnSessionTimeout={import.meta.env
+    .VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT}
 >
-  <slot></slot>
-</Keycloak>
+  <slot />
+</Web3Auth>
 ```
 
 ### Use these stores for auth information
@@ -214,10 +231,10 @@ export const getSession: GetSession = async (
 
 ```html
 <script lang="ts">
-  import { KeycloakProtectedRoute, LogoutButton } from "sveltekit-web3auth";
+  import { ProtectedRoute, LogoutButton } from "sveltekit-web3auth";
 </script>
 
-<KeycloakProtectedRoute>
+<ProtectedRoute>
   <div
     class="h-screen-minus-navbar bg-gray-800 text-white flex flex-col justify-center items-center w-full"
   >
@@ -225,32 +242,33 @@ export const getSession: GetSession = async (
 
     <LogoutButton class="btn btn-primary">Logout</LogoutButton>
   </div>
-</KeycloakProtectedRoute>
+</ProtectedRoute>
 ```
 
 # Application Screenshots
 
 ### Login / Index page
 
-![Login Page](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/Login_page.png?raw=true)
+![Login Page](https://github.com/CloudNativeEntrepreneur/sveltekit-web3auth/blob/main/docs/web3auth/1.png?raw=true)
 
 ### Once user clicks login, Redirection to Auth server
 
-![Keycloak Auth](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/keycloak_redirect_page.png?raw=true)
+![Metamask Auth](https://github.com/CloudNativeEntrepreneur/sveltekit-web3auth/blob/main/docs/web3auth/2.png?raw=true)
 
 ### Auth Complete - client hydrated with accessToken
 
-![Index page with JWT](https://github.com/tushar10sh/sveltekit-web3auth/blob/main/docs/Index_page_with_token.png?raw=true)
+![Index page with JWT](https://github.com/CloudNativeEntrepreneur/sveltekit-web3auth/blob/main/docs/web3auth/3.png?raw=true)
+
+### Protected Page and Session variables with user info
+
+![Index page with JWT](https://github.com/CloudNativeEntrepreneur/sveltekit-web3auth/blob/main/docs/web3auth/4.png?raw=true)
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've created a project and installed dependencies with `npm ci`, start a development server:
 
 ```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
 ## Building
