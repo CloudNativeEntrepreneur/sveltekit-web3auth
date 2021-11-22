@@ -38,7 +38,7 @@
     authError,
   };
 
-  const handleLoggedIn = (publicAddress: string, session) => (auth: any) => {
+  const handleLoggedIn = (publicAddress: string) => (auth: any) => {
     const user = JSON.parse(atob(auth.accessToken.split(".")[1]).toString());
     delete user.iat;
     // TODO: user.payload is temp for metamask login react demo
@@ -51,6 +51,13 @@
     AuthStore.userInfo.set({
       publicAddress,
     });
+    session.set({
+      userid: publicAddress,
+      accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken,
+      user,
+      authServerOnline: true
+    })
 
     return fetch(`/auth/login`, {
       body: JSON.stringify({ auth }),
@@ -105,7 +112,7 @@
       // Send signature to backend on the /auth route
       .then(handleAuthenticate(issuer))
       // Pass accessToken back to parent component (to save it in localStorage)
-      .then(handleLoggedIn(publicAddress, session))
+      .then(handleLoggedIn(publicAddress))
       .catch((err) => {
         window.alert(err);
       });
@@ -192,6 +199,9 @@
     AuthStore.refreshToken.set(null);
     AuthStore.isAuthenticated.set(false);
     AuthStore.isLoading.set(false);
+    session.set({
+      authServerOnline: true
+    })
     window.localStorage.setItem("user_logout", "true");
 
     try {

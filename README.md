@@ -2,20 +2,20 @@
 
 This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server. Sveltekit hooks take care of :
 
-    [] Silent Refresh Workflow
-    [] Validating the client accessToken validity
-    [] Renewing the token in case of token expiry
-    [] Offline Auth server error handling
-    [] Setting valid user information ( accessToken, refreshToken, userid etc. ) in form of cookies
-    [] Populating session variable with user information
+    [x] Silent Refresh Workflow
+    [x] Validating the client accessToken validity
+    [x] Renewing the token in case of token expiry
+    [x] Offline Auth server error handling
+    [x] Setting valid user information ( accessToken, refreshToken, userid etc. ) in form of cookies
+    [x] Populating session variable with user information
 
 When the client side kicks in, it:
 
-    [] Checks for user and Auth server information in session variable
-    [] In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
+    [x] Checks for user and Auth server information in session variable
+    [x] In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
     [] Provides Login, Logout functionality
-    [] Initiates authorization flow, in case of protected component via Sveletkit Load method.
-    [x] Logout in one browser tab initiates automatic logout from all tabs.
+    [x] Initiates authorization flow, in case of protected component via Sveletkit Load method.
+    [] Logout in one browser tab initiates automatic logout from all tabs.
     [] Prompt on all browser tabs and Page reloading on User Login.
 
 Goal is complete JWT Implementation based on [Hasura Blog on BEST Practices for JWT AUTH](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/) in context of meta mask login and challenge/signature auth flow.

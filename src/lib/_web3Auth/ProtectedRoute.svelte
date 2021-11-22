@@ -2,7 +2,7 @@
   import { browser } from "$app/env";
   import { session, page } from "$app/stores";
   import { getContext } from "svelte";
-  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "./Web3Auth.svelte";
+  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE, login } from "./Web3Auth.svelte";
   import type { Web3AuthContextClientPromise } from "../types";
   import { isTokenExpired } from "./jwt";
 
@@ -15,19 +15,17 @@
       );
       const web3Auth_func = await web3AuthPromise;
       const web3Params = web3Auth_func($page.path, $page.params);
-      if (!$session?.user || !$session?.accessToken || !$session?.user) {
+      if (!$session?.user || !$session?.accessToken) {
         try {
-          // console.log(redirect);
-          // window.location.assign(redirect);
-          console.log("AUTH HERE");
+          console.log('user or access token is missing', $session);
+          await login(web3AuthPromise)
         } catch (e) {
           console.error(e);
         }
       } else {
         if (isTokenExpired($session.accessToken)) {
-          // console.log(redirect);
-          // window.location.assign(redirect);
-          console.log("AUTH HERE");
+          console.log('access token is expired', $session);
+          await login(web3AuthPromise)
         }
         isAuthenticated = true;
       }
@@ -40,5 +38,7 @@
 {:then}
   {#if isAuthenticated}
     <slot />
+  {:else}
+    404
   {/if}
 {/await}

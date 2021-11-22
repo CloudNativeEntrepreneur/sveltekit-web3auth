@@ -11,11 +11,11 @@
         href="/">Home</a
       >
     </li>
-    <li class:nav-active={$page.path === "/todos"} class="nav-link md:h-full">
+    <li class:nav-active={$page.path === "/profile"} class="nav-link md:h-full">
       <a
         class="text-center font-semibold text-gray-100"
         sveltekit:prefetch
-        href="/todos">Todos</a
+        href="/profile">Profile</a
       >
     </li>
   </ul>
