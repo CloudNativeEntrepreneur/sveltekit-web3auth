@@ -6,7 +6,7 @@ import type { RequestHandler } from "@sveltejs/kit";
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
   console.log("/auth/logout");
-  let cookie = `userInfo=${JSON.stringify({
+  const cookie = `userInfo=${JSON.stringify({
     userid: null,
     user: null,
     refreshToken: null,

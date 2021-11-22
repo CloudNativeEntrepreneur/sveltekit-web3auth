@@ -11,7 +11,7 @@
     WEB3AUTH_CONTEXT_CLIENT_PROMISE
   );
 
-  let clazz: string = "btn btn-primary";
+  let clazz = "btn btn-primary";
   export { clazz as class };
 </script>
 

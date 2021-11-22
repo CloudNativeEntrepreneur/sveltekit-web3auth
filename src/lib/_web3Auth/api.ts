@@ -33,8 +33,7 @@ export async function renewWeb3AuthToken(
   clientId: string,
   clientSecret: string
 ): Promise<Web3AuthResponse> {
-
-  console.log('web3Auth:api:renewWeb3AuthToken')
+  console.log("web3Auth:api:renewWeb3AuthToken");
 
   if (!refreshToken) {
     const error_data: Web3AuthResponse = {
@@ -65,13 +64,13 @@ export async function renewWeb3AuthToken(
     body: JSON.stringify({ refreshToken }),
   });
 
-  console.log('web3Auth:api:renewWeb3AuthToken - res', res)
+  console.log("web3Auth:api:renewWeb3AuthToken - res", res);
 
   if (res.ok) {
     const newTokens = await res.json();
-    console.log(newTokens)
+    console.log(newTokens);
     const data: Web3AuthResponse = {
-      ...newTokens
+      ...newTokens,
     };
     return data;
   } else {

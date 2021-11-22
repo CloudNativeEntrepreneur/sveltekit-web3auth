@@ -9,7 +9,7 @@ export const post: RequestHandler<Locals, FormData> = async (request) => {
   const user = JSON.parse(atob(auth.accessToken.split(".")[1]).toString());
   console.log("auth/login", { user });
 
-  let cookie = `userInfo=${JSON.stringify({
+  const cookie = `userInfo=${JSON.stringify({
     userid: user.publicAddress,
     user,
     refreshToken: auth.refreshToken,

@@ -14,7 +14,7 @@
     WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI
   );
 
-  let clazz: string = "btn btn-primary";
+  let clazz = "btn btn-primary";
   export { clazz as class };
 </script>
 

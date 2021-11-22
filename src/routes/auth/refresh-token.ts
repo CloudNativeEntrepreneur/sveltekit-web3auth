@@ -12,9 +12,9 @@ const clientSecret =
  * @type {import('@sveltejs/kit').RequestHandler}
  */
 export const post: RequestHandler<Locals, FormData> = async (request) => {
-  let cookie : any = parseCookie(request.headers.cookie)
-  let { userInfo } = cookie
-  let user = JSON.parse(userInfo)
+  const cookie: any = parseCookie(request.headers.cookie);
+  const { userInfo } = cookie;
+  const user = JSON.parse(userInfo);
   const data = await renewWeb3AuthToken(
     user.refreshToken,
     issuer,

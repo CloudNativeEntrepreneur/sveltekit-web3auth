@@ -38,7 +38,7 @@ export const getUserSession: GetUserSessionFn = async (
         request.locals.userid &&
         !isTokenExpired(request.locals.accessToken)
       ) {
-        let isTokenActive = true;
+        const isTokenActive = true;
 
         if (isTokenActive) {
           console.log("hooks: getUserSession: token active - returning");
@@ -235,7 +235,9 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
     ? parseCookie(request.headers.cookie || "")
     : null;
   console.log({ cookies });
-  let userInfo = cookies?.["userInfo"] ? JSON.parse(cookies?.["userInfo"]) : {};
+  const userInfo = cookies?.["userInfo"]
+    ? JSON.parse(cookies?.["userInfo"])
+    : {};
 
   request.locals.retries = 0;
   request.locals.authError = {
@@ -249,8 +251,8 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   populateRequestLocals(request, "accessToken", userInfo, null);
   populateRequestLocals(request, "refreshToken", userInfo, null);
 
-  let ssr_redirect = false;
-  let ssr_redirect_uri = "/";
+  const ssr_redirect = false;
+  const ssr_redirect_uri = "/";
 
   // Parsing user object
   const userJsonParseFailed = parseUser(request, userInfo);

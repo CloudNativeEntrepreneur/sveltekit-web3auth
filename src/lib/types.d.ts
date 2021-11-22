@@ -33,7 +33,7 @@ export interface Web3AuthSuccessResponse {
   refreshToken: string;
 }
 
-export interface Web3AuthFailureResponse extends AuthError {}
+export type Web3AuthFailureResponse = AuthError;
 
 export type Web3AuthResponse = Web3AuthSuccessResponse &
   Web3AuthFailureResponse;

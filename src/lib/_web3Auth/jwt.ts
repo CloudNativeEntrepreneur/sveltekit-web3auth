@@ -9,7 +9,10 @@ export function isTokenExpired(jwt: string): boolean {
   } catch (e) {
     try {
       data = JSON.parse(atob(jwt.split(".")[1]).toString());
-    } catch (e) {}
+    } catch (err) {
+      console.error("Could not parse token", err);
+      return true;
+    }
   }
   return data?.exp
     ? new Date().getTime() / 1000 > data.exp - tokenTimeSkew

@@ -1,6 +1,6 @@
 const decode = decodeURIComponent;
 const encode = encodeURIComponent;
-var pairSplitRegExp = /; */;
+const pairSplitRegExp = /; */;
 
 /**
  * RegExp to match field-content in RFC 7230 sec 3.2
@@ -10,29 +10,29 @@ var pairSplitRegExp = /; */;
  * obs-text      = %x80-FF
  */
 
-const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
+// const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 
 export const parseCookie = (str: string, options?: any) => {
   if (typeof str !== "string") {
     throw new TypeError("argument str must be a string");
   }
 
-  var obj = {};
-  var opt = options || {};
-  var pairs = str.split(pairSplitRegExp);
-  var dec = opt.decode || decode;
+  const obj = {};
+  const opt = options || {};
+  const pairs = str.split(pairSplitRegExp);
+  const dec = opt.decode || decode;
 
-  for (var i = 0; i < pairs.length; i++) {
-    var pair = pairs[i];
-    var eq_idx = pair.indexOf("=");
+  for (let i = 0; i < pairs.length; i++) {
+    const pair = pairs[i];
+    let eq_idx = pair.indexOf("=");
 
     // skip things that don't look like key=value
     if (eq_idx < 0) {
       continue;
     }
 
-    var key = pair.substr(0, eq_idx).trim();
-    var val = pair.substr(++eq_idx, pair.length).trim();
+    const key = pair.substr(0, eq_idx).trim();
+    let val = pair.substr(++eq_idx, pair.length).trim();
 
     // quoted values
     if ('"' == val[0]) {

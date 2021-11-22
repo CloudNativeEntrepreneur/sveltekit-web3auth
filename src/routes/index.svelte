@@ -11,7 +11,7 @@
     LoginButton,
     LogoutButton,
   } from "$lib";
-import RefreshTokenButton from "$lib/_web3Auth/RefreshTokenButton.svelte";
+  import RefreshTokenButton from "$lib/_web3Auth/RefreshTokenButton.svelte";
 
   let accessTokenElement;
   let isAccessTokenCopied = false;
@@ -72,7 +72,9 @@ import RefreshTokenButton from "$lib/_web3Auth/RefreshTokenButton.svelte";
         </div>
       </div>
       <LogoutButton class="btn btn-primary">Logout</LogoutButton>
-      <RefreshTokenButton class="btn btn-primary">Refresh Token</RefreshTokenButton>
+      <RefreshTokenButton class="btn btn-primary"
+        >Refresh Token</RefreshTokenButton
+      >
     </section>
   {:else if $authError}
     <section class="p-5 rounded-lg bg-red-400">

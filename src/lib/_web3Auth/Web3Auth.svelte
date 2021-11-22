@@ -13,8 +13,8 @@
   let web3;
 
   export const WEB3AUTH_CONTEXT_CLIENT_PROMISE = {};
-  export const WEB3AUTH_CONTEXT_REDIRECT_URI: string = "";
-  export const WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = "";
+  export const WEB3AUTH_CONTEXT_REDIRECT_URI = "";
+  export const WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI = "";
 
   import { writable } from "svelte/store";
   /**
@@ -56,8 +56,8 @@
       accessToken: auth.accessToken,
       refreshToken: auth.refreshToken,
       user,
-      authServerOnline: true
-    })
+      authServerOnline: true,
+    });
 
     return fetch(`/auth/login`, {
       body: JSON.stringify({ auth }),
@@ -200,8 +200,8 @@
     AuthStore.isAuthenticated.set(false);
     AuthStore.isLoading.set(false);
     session.set({
-      authServerOnline: true
-    })
+      authServerOnline: true,
+    });
     window.localStorage.setItem("user_logout", "true");
 
     try {
@@ -254,7 +254,7 @@
         AuthStore.accessToken.set(accessToken);
         AuthStore.refreshToken.set(refreshToken);
 
-        return { accessToken, refreshToken }
+        return { accessToken, refreshToken };
       }
     } catch (e) {
       AuthStore.accessToken.set(null);
@@ -265,7 +265,7 @@
         error_description: e?.error_description,
       });
     }
-  }
+  };
 </script>
 
 <script lang="ts">
@@ -276,7 +276,7 @@
   export let postLogoutRedirectURI: string;
   export let scope: string;
   export let refreshTokenEndpoint: string;
-  export let refreshPageOnSessionTimeout: boolean = false;
+  export let refreshPageOnSessionTimeout = false;
 
   const web3Auth_func: Web3AuthContextClientFn = () => {
     return {
@@ -298,31 +298,31 @@
   async function silentRefresh(oldRefreshToken: string) {
     console.log("Web3Auth:silentRefresh");
     try {
-        const { accessToken, refreshToken } = await tokenRefresh(oldRefreshToken)
+      const { accessToken, refreshToken } = await tokenRefresh(oldRefreshToken);
 
-        const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
-        const tokenSkew = 10; // 10 seconds before actual token expiry
-        const skewedTimeoutDuration =
-          jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
-        const timeoutDuration =
-          skewedTimeoutDuration > 0
-            ? skewedTimeoutDuration
-            : skewedTimeoutDuration + tokenSkew * 1000;
+      const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
+      const tokenSkew = 10; // 10 seconds before actual token expiry
+      const skewedTimeoutDuration =
+        jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
+      const timeoutDuration =
+        skewedTimeoutDuration > 0
+          ? skewedTimeoutDuration
+          : skewedTimeoutDuration + tokenSkew * 1000;
 
-        if (tokenTimeoutObj) {
-          clearTimeout(tokenTimeoutObj);
-        }
+      if (tokenTimeoutObj) {
+        clearTimeout(tokenTimeoutObj);
+      }
 
-        if (timeoutDuration > 0) {
-          tokenTimeoutObj = setTimeout(async () => {
-            await silentRefresh(refreshToken);
-          }, timeoutDuration);
-        } else {
-          throw {
-            error: "invalid_grant",
-            error_description: "Session not active",
-          };
-        }
+      if (timeoutDuration > 0) {
+        tokenTimeoutObj = setTimeout(async () => {
+          await silentRefresh(refreshToken);
+        }, timeoutDuration);
+      } else {
+        throw {
+          error: "invalid_grant",
+          error_description: "Session not active",
+        };
+      }
     } catch (e) {
       if (tokenTimeoutObj) {
         clearTimeout(tokenTimeoutObj);
@@ -353,7 +353,9 @@
               window.location.assign($page.path);
             }
           }
-        } catch (e) {}
+        } catch (err) {
+          console.error("Sync logout error", err);
+        }
       }
     }
   };
@@ -381,7 +383,9 @@
               window.location.assign($page.path);
             }
           }
-        } catch (e) {}
+        } catch (err) {
+          console.error("Sync login error", err);
+        }
       }
     }
   };
@@ -392,7 +396,9 @@
       console.log("Web3Auth:handleMount - adding event listeners");
       window.addEventListener("storage", syncLogout);
       window.addEventListener("storage", syncLogin);
-    } catch (e) {}
+    } catch (err) {
+      console.error("Error adding storage event handlers", err);
+    }
 
     try {
       if ($session?.auth_server_online === false) {
@@ -444,7 +450,9 @@
               "user_login",
               JSON.stringify($session.user)
             );
-          } catch (e) {}
+          } catch (e) {
+            console.error("Error setting local storage 'user_login'");
+          }
         }
       }
     } catch (e) {
@@ -472,7 +480,9 @@
     try {
       window.removeEventListener("storage", syncLogout);
       window.removeEventListener("storage", syncLogin);
-    } catch (e) {}
+    } catch (err) {
+      console.error("Error removing storage event listeners", err);
+    }
   });
 </script>
 
