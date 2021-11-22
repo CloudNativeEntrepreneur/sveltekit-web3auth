@@ -5,10 +5,13 @@ name: Quality
 
 on:
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - main
   push:
     branches:
       - master
+      - main
 
 jobs:
   build:
