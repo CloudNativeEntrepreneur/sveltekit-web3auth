@@ -232,7 +232,10 @@
     }
   }
 
-  export const tokenRefresh = async (web3AuthPromise: Web3AuthContextClientPromise, refreshTokenToExchange) => {
+  export const tokenRefresh = async (
+    web3AuthPromise: Web3AuthContextClientPromise,
+    refreshTokenToExchange
+  ) => {
     const web3Auth_func = await web3AuthPromise;
     const { clientId } = web3Auth_func();
     try {
@@ -243,7 +246,7 @@
         },
         body: JSON.stringify({
           clientId,
-          refreshToken: refreshTokenToExchange
+          refreshToken: refreshTokenToExchange,
         }),
       });
 
@@ -306,7 +309,10 @@
   async function silentRefresh(refreshTokenToExchange: string) {
     console.log("Web3Auth:silentRefresh");
     try {
-      const { accessToken, refreshToken } = await tokenRefresh(web3_auth_promise, refreshTokenToExchange);
+      const { accessToken, refreshToken } = await tokenRefresh(
+        web3_auth_promise,
+        refreshTokenToExchange
+      );
 
       const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
       const tokenSkew = 10; // 10 seconds before actual token expiry

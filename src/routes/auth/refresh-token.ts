@@ -3,7 +3,7 @@ import { renewWeb3AuthToken, parseCookie } from "$lib";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 
-const issuer = import.meta.env.VITE_WEB3_AUTH_ISSUER
+const issuer = import.meta.env.VITE_WEB3_AUTH_ISSUER;
 const clientSecret =
   process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
   import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
