@@ -96,23 +96,19 @@ export const getUserSession: GetUserSessionFn = async (
       } else {
         try {
           const data = await res.json();
-          // console.log(data, import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES);
+
           if (
             data?.error &&
             request.locals?.retries <
               import.meta.env.VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES
           ) {
-            console.log(
-              "old token expiry",
-              isTokenExpired(request.locals.accessToken)
-            );
             const newTokenData = await renewWeb3AuthToken(
               request.locals.refreshToken,
               web3AuthBaseUrl,
               clientId,
               clientSecret
             );
-            // console.log(newTokenData);
+
             if (newTokenData?.error) {
               throw {
                 error: data?.error ? data.error : "user_info error",
@@ -141,16 +137,11 @@ export const getUserSession: GetUserSessionFn = async (
         }
       }
     } else {
-      console.log("hooks: getUserSession: no access token");
       try {
         if (
           request.locals?.retries <
           import.meta.env.VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES
         ) {
-          console.log(
-            "old token expiry",
-            isTokenExpired(request.locals.accessToken)
-          );
           const newTokenData = await renewWeb3AuthToken(
             request.locals.refreshToken,
             web3AuthBaseUrl,

@@ -1,29 +1,6 @@
-import type { Locals } from "$lib/types";
-import type { RequestHandler } from "@sveltejs/kit";
+import { post as logout } from "$lib/_web3Auth/routes/auth/logout";
 
-/**
- * @type {import('@sveltejs/kit').RequestHandler}
- */
-export const post: RequestHandler<Locals, FormData> = async (request) => {
-  console.log("/auth/logout");
-  const cookie = `userInfo=${JSON.stringify({
-    userid: null,
-    user: null,
-    refreshToken: null,
-  })};`;
+const clientSecret = import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
+const issuer = import.meta.env.VITE_WEB3_AUTH_ISSUER;
 
-  const response = {
-    body: {
-      status: "success",
-    },
-    headers: {
-      "Set-Cookie": `${cookie}; SameSite=Lax; HttpOnly;`,
-    },
-  };
-
-  request.locals.userid = null;
-  request.locals.user = null;
-  request.locals.accessToken = null;
-  request.locals.refreshToken = null;
-  return response;
-};
+export const post = logout(clientSecret, issuer);
