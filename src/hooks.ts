@@ -3,15 +3,10 @@ import { userDetailsGenerator, getUserSession } from "$lib";
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
-const clientSecret =
-  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
-  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
+const clientSecret = import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log("HOOKS: HANDLE", {
-    headers: request.headers,
-    locals: request.locals,
-  });
+  console.log("HOOKS: HANDLE");
   // Initialization part
   const userGen = userDetailsGenerator(request, clientSecret);
   const { value, done } = await userGen.next();

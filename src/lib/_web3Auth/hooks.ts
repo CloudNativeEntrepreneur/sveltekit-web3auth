@@ -226,15 +226,10 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   request: ServerRequest<Locals>,
   clientSecret: string
 ) {
-  console.log("hooks: userDetailsGenerator:", {
-    requestPath: request.path,
-    requestHeaders: request.headers,
-    requestLocals: request.locals,
-  });
+  console.log("hooks: userDetailsGenerator");
   const cookies = request.headers.cookie
     ? parseCookie(request.headers.cookie || "")
     : null;
-  console.log({ cookies });
   const userInfo = cookies?.["userInfo"]
     ? JSON.parse(cookies?.["userInfo"])
     : {};
