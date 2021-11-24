@@ -1,6 +1,5 @@
 import type {
   Locals,
-  Web3AuthResponse,
   UserDetailsGeneratorFn,
   GetUserSessionFn,
 } from "../types";
@@ -24,15 +23,15 @@ const { clientId, issuer } = config;
 
 const web3AuthBaseUrl = issuer;
 
+// This function is recursive - if a user does not have an access token, but a refresh token
+// it attempts to refresh the access token, and calls itself again recursively, this time
+// to go down the path of having the access token
 export const getUserSession: GetUserSessionFn = async (
   request: ServerRequest<Locals>,
   clientSecret
 ) => {
-  console.log("hooks: getUserSession", { locals: request.locals });
   try {
-    // TODO: Tokens have no expiration currently, so introspection never happens
     if (request.locals?.accessToken) {
-      console.log("hooks: getUserSession: has access token");
       if (
         request.locals.user &&
         request.locals.userid &&
@@ -41,7 +40,6 @@ export const getUserSession: GetUserSessionFn = async (
         const isTokenActive = true;
 
         if (isTokenActive) {
-          console.log("hooks: getUserSession: token active - returning");
           return {
             user: { ...request.locals.user },
             accessToken: request.locals.accessToken,
@@ -223,13 +221,12 @@ export const getUserSession: GetUserSessionFn = async (
 };
 
 export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
-  request: ServerRequest<Locals>,
-  clientSecret: string
+  request: ServerRequest<Locals>
 ) {
-  console.log("hooks: userDetailsGenerator");
   const cookies = request.headers.cookie
     ? parseCookie(request.headers.cookie || "")
     : null;
+
   const userInfo = cookies?.["userInfo"]
     ? JSON.parse(cookies?.["userInfo"])
     : {};
@@ -240,39 +237,25 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
     error_description: null,
   };
 
-  console.log("hooks: userDetailsGenerator:", { userInfo });
-
   populateRequestLocals(request, "userid", userInfo, "");
   populateRequestLocals(request, "accessToken", userInfo, null);
   populateRequestLocals(request, "refreshToken", userInfo, null);
-
-  const ssr_redirect = false;
-  const ssr_redirect_uri = "/";
 
   // Parsing user object
   const userJsonParseFailed = parseUser(request, userInfo);
 
   const tokenExpired = isTokenExpired(request.locals.accessToken);
-  // const tokenExpired = false;
   const beforeAccessToken = request.locals.accessToken;
-
-  console.log("hooks: userDetailsGenerator: before token", {
-    tokenExpired,
-    beforeAccessToken,
-  });
 
   request = { ...request, ...(yield) };
 
   let response: ServerResponse = { status: 200, headers: {} };
   const afterAccessToken = request.locals.accessToken;
 
-  console.log("hooks: userDetailsGenerator: after token", {
-    afterAccessToken,
-  });
-
   if (isAuthInfoInvalid(request.headers) || tokenExpired) {
     response = populateResponseHeaders(request, response);
   }
+
   if (
     isAuthInfoInvalid(userInfo) ||
     (request.locals?.user && userJsonParseFailed) ||
@@ -282,10 +265,6 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
     // if this is the first time the user has visited this app,
     // set a cookie so that we recognise them when they return
     response = injectCookies(request, response);
-  }
-  if (ssr_redirect) {
-    response.status = 302;
-    response.headers["Location"] = ssr_redirect_uri;
   }
 
   return response;

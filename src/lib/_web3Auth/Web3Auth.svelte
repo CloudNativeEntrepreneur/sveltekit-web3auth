@@ -60,7 +60,7 @@
     });
   };
 
-  async function metaMaskLogin({ issuer, clientId }) {
+  async function metaMaskLogin({ clientId }) {
     try {
       if (!(window as any).ethereum) {
         window.alert("Please install MetaMask first.");
@@ -159,7 +159,7 @@
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
 
-          await metaMaskLogin({ issuer, clientId });
+          await metaMaskLogin({ clientId });
         } else if (session?.error) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
@@ -232,16 +232,19 @@
     }
   }
 
-  export const tokenRefresh = async (oldRefreshToken: string) => {
-    console.log("Web3Auth:tokenRefresh");
+  export const tokenRefresh = async (web3AuthPromise: Web3AuthContextClientPromise, refreshTokenToExchange) => {
+    const web3Auth_func = await web3AuthPromise;
+    const { clientId } = web3Auth_func();
     try {
-      const reqBody = `refreshToken=${oldRefreshToken}`;
       const res = await fetch("/auth/refresh-token", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: reqBody,
+        body: JSON.stringify({
+          clientId,
+          refreshToken: refreshTokenToExchange
+        }),
       });
 
       if (res.ok) {
@@ -300,10 +303,10 @@
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
   let tokenTimeoutObj = null;
-  async function silentRefresh(oldRefreshToken: string) {
+  async function silentRefresh(refreshTokenToExchange: string) {
     console.log("Web3Auth:silentRefresh");
     try {
-      const { accessToken, refreshToken } = await tokenRefresh(oldRefreshToken);
+      const { accessToken, refreshToken } = await tokenRefresh(web3_auth_promise, refreshTokenToExchange);
 
       const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
       const tokenSkew = 10; // 10 seconds before actual token expiry
@@ -395,7 +398,6 @@
   async function handleMount() {
     if (browser) {
       try {
-        console.log("Web3Auth:handleMount - adding event listeners");
         window.addEventListener("storage", syncLogout);
         window.addEventListener("storage", syncLogin);
       } catch (err) {
@@ -459,8 +461,7 @@
         }
       }
     } catch (e) {
-      console.error("Web3Auth:handleMount - error");
-      console.error(e);
+      console.error("Web3Auth:handleMount - error", e);
       AuthStore.isLoading.set(false);
       AuthStore.isAuthenticated.set(false);
       AuthStore.accessToken.set(null);
@@ -469,9 +470,6 @@
         error: "auth_server_conn_error",
         error_description: "Auth Server Connection Error",
       });
-      // if (window.location.toString().includes("event=logout")) {
-      //   window.location.assign($page.path);
-      // }
     }
   }
   onMount(handleMount);

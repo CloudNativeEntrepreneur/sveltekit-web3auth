@@ -39,7 +39,7 @@ export type Web3AuthResponse = Web3AuthSuccessResponse &
   Web3AuthFailureResponse;
 
 export interface UserDetailsGeneratorFn {
-  (request: ServerRequest<Locals>, clientSecret: string): AsyncGenerator<
+  (request: ServerRequest<Locals>): AsyncGenerator<
     ServerResponse,
     ServerResponse,
     ServerRequest<Locals>
