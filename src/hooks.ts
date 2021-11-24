@@ -6,7 +6,6 @@ import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 const clientSecret = import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log("HOOKS: HANDLE");
   // Initialization part
   const userGen = userDetailsGenerator(request);
   const { value, done } = await userGen.next();
