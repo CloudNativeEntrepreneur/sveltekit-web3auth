@@ -7,7 +7,7 @@
     Web3AuthContextClientFn,
     Web3AuthContextClientPromise,
   } from "../types";
-  import { handleAuthenticate, handleSignup } from "./api";
+  import { handleAuthenticate, handleSignup } from "./routes-api";
   import { handleSignMessage } from "./metamask";
 
   let web3;
@@ -41,8 +41,7 @@
   const handleLoggedIn = (publicAddress: string) => (auth: any) => {
     const user = JSON.parse(atob(auth.accessToken.split(".")[1]).toString());
     delete user.iat;
-    // TODO: user.payload is temp for metamask login react demo
-    delete user.payload;
+
     localStorage.removeItem("user_logout");
     localStorage.setItem("user_login", JSON.stringify(user));
     AuthStore.isAuthenticated.set(true);
@@ -197,7 +196,7 @@
     console.log("Web3Auth:logout");
     const web3Auth_func = await web3AuthPromise;
     const web3Params = web3Auth_func();
-    // TODO: potential improvement - notify auth server to end session
+
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
     AuthStore.accessToken.set(null);
