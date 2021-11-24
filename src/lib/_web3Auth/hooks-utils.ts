@@ -104,8 +104,5 @@ export const populateResponseHeaders = (
     response.headers["refreshToken"] = `${request.locals.refreshToken}`;
   }
 
-  console.log("populateResponseHeaders - end", {
-    responseHeaders: response.headers,
-  });
   return response;
 };
