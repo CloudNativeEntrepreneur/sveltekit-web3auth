@@ -1,3 +1,4 @@
+import { createAuthSession } from "$lib/_web3Auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 
@@ -10,21 +11,14 @@ export const post =
     const clientId = (request.body as any).clientId;
     const publicAddress = (request.body as any).publicAddress;
     const signature = (request.body as any).signature;
-    const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
 
-    let auth;
-    const createAuthSessionFetch = await fetch(`${issuer}/api/auth`, {
-      body: JSON.stringify({ publicAddress, signature }),
-      headers: {
-        Authorization,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    });
-
-    if (createAuthSessionFetch.ok) {
-      auth = await createAuthSessionFetch.json();
-    }
+    const auth = await createAuthSession(
+      issuer,
+      clientId,
+      clientSecret,
+      publicAddress,
+      signature
+    );
 
     const user = JSON.parse(atob(auth.idToken.split(".")[1]).toString());
     delete user.aud;

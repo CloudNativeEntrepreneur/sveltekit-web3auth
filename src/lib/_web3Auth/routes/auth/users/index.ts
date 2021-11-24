@@ -1,4 +1,5 @@
 import type { Locals } from "$lib/types";
+import { getUsers } from "$lib/_web3Auth/auth-api";
 import type { RequestHandler } from "@sveltejs/kit";
 
 /**
@@ -10,25 +11,11 @@ export const post =
     const clientId = (request.body as any).clientId;
     const publicAddress = (request.body as any).publicAddress;
 
-    const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
+    const users = await getUsers(issuer, clientId, clientSecret, publicAddress);
 
-    const fetchResult = await fetch(
-      `${issuer}/api/users?publicAddress=${publicAddress}`,
-      {
-        headers: {
-          Authorization,
-        },
-        method: "GET",
-      }
-    );
+    const response = {
+      body: JSON.stringify(users),
+    };
 
-    if (fetchResult.ok) {
-      const users = await fetchResult.json();
-
-      const response = {
-        body: JSON.stringify(users),
-      };
-
-      return response;
-    }
+    return response;
   };
