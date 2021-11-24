@@ -4,7 +4,7 @@ import {
   VITE_HASURA_GRAPHQL_WS_URL,
 } from "$lib/env";
 
-export default {
+export const config = {
   graphql: {
     http: VITE_HASURA_GRAPHQL_URL,
     httpInternal: VITE_HASURA_GRAPHQL_INTERNAL_URL,
