@@ -12,7 +12,6 @@ export const post =
     const signature = (request.body as any).signature;
     const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
 
-    console.log("POST /auth/login", { Authorization });
     let auth;
     const createAuthSessionFetch = await fetch(`${issuer}/api/auth`, {
       body: JSON.stringify({ publicAddress, signature }),
