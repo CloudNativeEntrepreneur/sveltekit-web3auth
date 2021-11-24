@@ -30,7 +30,8 @@ export const injectCookies = (
 };
 
 export const isAuthInfoInvalid = (obj) => {
-  const isAuthInvalid = !obj?.userid || !obj?.accessToken || !obj?.refreshToken || !obj?.user
+  const isAuthInvalid =
+    !obj?.userid || !obj?.accessToken || !obj?.refreshToken || !obj?.user;
   return isAuthInvalid;
 };
 

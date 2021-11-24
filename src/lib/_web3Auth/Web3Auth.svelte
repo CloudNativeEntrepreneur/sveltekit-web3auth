@@ -66,12 +66,12 @@
         window.alert("Please install MetaMask first.");
         return;
       }
-  
+
       if (!web3) {
         try {
           // Request account access if needed
           await (window as any).ethereum.enable();
-  
+
           // We don't know window.web3 version, so we use our own instance of Web3
           // with the injected provider given by MetaMask
           web3 = new (window as any).Web3((window as any).ethereum);
@@ -81,45 +81,45 @@
           return;
         }
       }
-  
+
       const coinbase = await web3.eth.getCoinbase();
       if (!coinbase) {
         window.alert("Please activate MetaMask first.");
         return;
       }
-  
+
       const publicAddress = coinbase.toLowerCase();
-  
+
       // Look if user with current publicAddress is already present on backend
       console.log("Finding user with address", publicAddress);
-  
-      let user
-      let users
+
+      let user;
+      let users;
       const usersWithPublicAddressResponse = await fetch(`/auth/users`, {
         body: JSON.stringify({
           publicAddress,
-          clientId
+          clientId,
         }),
         headers: {
           "Content-Type": "application/json",
         },
-        method: 'POST'
-      })
-  
+        method: "POST",
+      });
+
       if (usersWithPublicAddressResponse.ok) {
-        users = await usersWithPublicAddressResponse.json()
+        users = await usersWithPublicAddressResponse.json();
       }
-    
+
       if (users.length) {
-        user = users[0]
+        user = users[0];
       } else {
-        user = await handleSignup(clientId)(publicAddress)
+        user = await handleSignup(clientId)(publicAddress);
       }
-  
-      const signedMessage = await handleSignMessage(web3)(user)  
-      const authResponse = await handleAuthenticate(clientId)(signedMessage)
-      
-      await handleLoggedIn(publicAddress)(authResponse)
+
+      const signedMessage = await handleSignMessage(web3)(user);
+      const authResponse = await handleAuthenticate(clientId)(signedMessage);
+
+      await handleLoggedIn(publicAddress)(authResponse);
     } catch (err) {
       window.alert(err);
     }
@@ -393,7 +393,6 @@
   };
 
   async function handleMount() {
-    
     if (browser) {
       try {
         console.log("Web3Auth:handleMount - adding event listeners");

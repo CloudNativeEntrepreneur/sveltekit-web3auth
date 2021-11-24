@@ -10,7 +10,7 @@
     accessToken,
     LoginButton,
     LogoutButton,
-    RefreshTokenButton
+    RefreshTokenButton,
   } from "$lib";
 
   let accessTokenElement;

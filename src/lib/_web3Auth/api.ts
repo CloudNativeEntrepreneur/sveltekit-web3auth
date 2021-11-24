@@ -46,7 +46,7 @@ export async function renewWeb3AuthToken(
     return error_data;
   }
 
-  const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`
+  const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
   const res = await fetch(`${issuer}/api/auth/token`, {
     method: "POST",
     headers: {
