@@ -6,12 +6,14 @@ import {
   cacheExchange,
   fetchExchange,
 } from "@urql/svelte";
+import { accessToken } from "$lib";
 import fetch from "cross-fetch";
 import { devtoolsExchange } from "@urql/devtools";
 import ws from "ws";
 import * as stws from "subscriptions-transport-ws";
 import { browser } from "$app/env";
-import config from "$lib/config.js";
+import { config } from "$lib/config";
+import { get } from "svelte/store";
 
 const isServerSide = !browser;
 const subscriptionClient = new stws.SubscriptionClient(
@@ -23,7 +25,7 @@ const subscriptionClient = new stws.SubscriptionClient(
 );
 const ssr = ssrExchange({
   isClient: !isServerSide,
-  initialState: !isServerSide ? window.__URQL_DATA__ : undefined,
+  initialState: !isServerSide ? (window as any).__URQL_DATA__ : undefined,
 });
 
 const clientConfig = {
@@ -45,4 +47,20 @@ const clientConfig = {
   requestPolicy: "cache-and-network",
 };
 
-export const client = createClient(clientConfig);
+export const graphQLClient = (session) => {
+  const fetchOptions = () => {
+    const currentAccessToken = get(accessToken);
+    const sessionAccesstoken = session.accessToken;
+    const eitherAccessToken = currentAccessToken || sessionAccesstoken;
+
+    return {
+      headers: {
+        authorization: eitherAccessToken ? `Bearer ${eitherAccessToken}` : "",
+      },
+    };
+  };
+
+  const urqlConfig = Object.assign({}, clientConfig, { fetchOptions });
+
+  return createClient(urqlConfig as any);
+};

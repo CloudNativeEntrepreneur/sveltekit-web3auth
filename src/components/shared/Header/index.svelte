@@ -18,5 +18,12 @@
         href="/profile">Profile</a
       >
     </li>
+    <li class:nav-active={$page.path === "/graphql"} class="nav-link md:h-full">
+      <a
+        class="text-center font-semibold text-gray-100"
+        sveltekit:prefetch
+        href="/graphql">GraphQL</a
+      >
+    </li>
   </ul>
 </nav>
