@@ -5,9 +5,7 @@ import type {
 } from "../types";
 import { parseCookie } from "./cookie";
 import { isTokenExpired } from "./jwt";
-import {
-  renewWeb3AuthToken,
-} from "./auth-api";
+import { renewWeb3AuthToken } from "./auth-api";
 import {
   injectCookies,
   isAuthInfoInvalid,
