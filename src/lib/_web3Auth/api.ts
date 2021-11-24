@@ -1,8 +1,9 @@
 import type { Web3AuthFailureResponse, Web3AuthResponse } from "../types";
 import { isTokenExpired } from "./jwt";
 
+// TODO: Basic auth with clientId/secret
 export const handleAuthenticate =
-  (issuer) =>
+  (clientId) =>
   ({
     publicAddress,
     signature,
@@ -10,17 +11,18 @@ export const handleAuthenticate =
     publicAddress: string;
     signature: string;
   }) =>
-    fetch(`${issuer}/auth/auth`, {
-      body: JSON.stringify({ publicAddress, signature }),
+    fetch(`/auth/login`, {
+      body: JSON.stringify({ clientId, publicAddress, signature }),
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
     }).then((response) => response.json());
 
-export const handleSignup = (issuer: string) => (publicAddress: string) =>
-  fetch(`${issuer}/auth/users`, {
-    body: JSON.stringify({ publicAddress }),
+// TODO: Basic auth with clientId/secret
+export const handleSignup = (clientId: string) => (publicAddress: string) =>
+  fetch(`/auth/users/register`, {
+    body: JSON.stringify({ publicAddress, clientId }),
     headers: {
       "Content-Type": "application/json",
     },
@@ -33,8 +35,6 @@ export async function renewWeb3AuthToken(
   clientId: string,
   clientSecret: string
 ): Promise<Web3AuthResponse> {
-  console.log("web3Auth:api:renewWeb3AuthToken");
-
   if (!refreshToken) {
     const error_data: Web3AuthResponse = {
       error: "invalid_grant",
@@ -46,29 +46,18 @@ export async function renewWeb3AuthToken(
     return error_data;
   }
 
-  // const data: Web3AuthResponse = {
-  //   accessToken: refreshToken,
-  //   refreshToken: refreshToken,
-  //   idToken: refreshToken,
-  //   error: null,
-  //   error_description: null,
-  // };
-
-  // return data;
-
-  const res = await fetch(`${issuer}/auth/auth/token`, {
+  const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`
+  const res = await fetch(`${issuer}/api/auth/token`, {
     method: "POST",
     headers: {
+      Authorization,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ refreshToken }),
   });
 
-  console.log("web3Auth:api:renewWeb3AuthToken - res", res);
-
   if (res.ok) {
     const newTokens = await res.json();
-    console.log(newTokens);
     const data: Web3AuthResponse = {
       ...newTokens,
     };

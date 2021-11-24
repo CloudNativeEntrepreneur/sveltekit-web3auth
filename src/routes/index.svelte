@@ -10,8 +10,8 @@
     accessToken,
     LoginButton,
     LogoutButton,
+    RefreshTokenButton
   } from "$lib";
-  import RefreshTokenButton from "$lib/_web3Auth/RefreshTokenButton.svelte";
 
   let accessTokenElement;
   let isAccessTokenCopied = false;

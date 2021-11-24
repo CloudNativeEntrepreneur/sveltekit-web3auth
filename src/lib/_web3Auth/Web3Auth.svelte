@@ -58,72 +58,77 @@
       user,
       authServerOnline: true,
     });
-
-    return fetch(`/auth/login`, {
-      body: JSON.stringify({ auth }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    }).then((response) => response.json());
   };
 
-  async function metaMaskLogin({ issuer, session }) {
-    console.log("Web3Auth:metaMaskLogin");
-    if (!(window as any).ethereum) {
-      window.alert("Please install MetaMask first.");
-      return;
-    }
-
-    if (!web3) {
-      try {
-        // Request account access if needed
-        await (window as any).ethereum.enable();
-
-        // We don't know window.web3 version, so we use our own instance of Web3
-        // with the injected provider given by MetaMask
-        web3 = new (window as any).Web3((window as any).ethereum);
-      } catch (error) {
-        console.error(error);
-        window.alert("You need to allow MetaMask.");
+  async function metaMaskLogin({ issuer, clientId }) {
+    try {
+      if (!(window as any).ethereum) {
+        window.alert("Please install MetaMask first.");
         return;
       }
+  
+      if (!web3) {
+        try {
+          // Request account access if needed
+          await (window as any).ethereum.enable();
+  
+          // We don't know window.web3 version, so we use our own instance of Web3
+          // with the injected provider given by MetaMask
+          web3 = new (window as any).Web3((window as any).ethereum);
+        } catch (error) {
+          console.error(error);
+          window.alert("You need to allow MetaMask.");
+          return;
+        }
+      }
+  
+      const coinbase = await web3.eth.getCoinbase();
+      if (!coinbase) {
+        window.alert("Please activate MetaMask first.");
+        return;
+      }
+  
+      const publicAddress = coinbase.toLowerCase();
+  
+      // Look if user with current publicAddress is already present on backend
+      console.log("Finding user with address", publicAddress);
+  
+      let user
+      let users
+      const usersWithPublicAddressResponse = await fetch(`/auth/users`, {
+        body: JSON.stringify({
+          publicAddress,
+          clientId
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: 'POST'
+      })
+  
+      if (usersWithPublicAddressResponse.ok) {
+        users = await usersWithPublicAddressResponse.json()
+      }
+    
+      if (users.length) {
+        user = users[0]
+      } else {
+        user = await handleSignup(clientId)(publicAddress)
+      }
+  
+      const signedMessage = await handleSignMessage(web3)(user)  
+      const authResponse = await handleAuthenticate(clientId)(signedMessage)
+      
+      await handleLoggedIn(publicAddress)(authResponse)
+    } catch (err) {
+      window.alert(err);
     }
-
-    const coinbase = await web3.eth.getCoinbase();
-    if (!coinbase) {
-      window.alert("Please activate MetaMask first.");
-      return;
-    }
-
-    const publicAddress = coinbase.toLowerCase();
-
-    // Look if user with current publicAddress is already present on backend
-    console.log("Finding user with address", publicAddress);
-
-    fetch(`${issuer}/auth/users?publicAddress=${publicAddress}`)
-      .then((response) => response.json())
-      // If yes, retrieve it. If no, create it.
-      .then((users) =>
-        users.length ? users[0] : handleSignup(issuer)(publicAddress)
-      )
-      // Popup MetaMask confirmation modal to sign message
-      .then(handleSignMessage(web3))
-      // Send signature to backend on the /auth route
-      .then(handleAuthenticate(issuer))
-      // Pass accessToken back to parent component (to save it in localStorage)
-      .then(handleLoggedIn(publicAddress))
-      .catch((err) => {
-        window.alert(err);
-      });
   }
 
   export async function login(web3AuthPromise: Web3AuthContextClientPromise) {
-    console.log("Web3Auth:login");
     try {
       const web3Auth_func = await web3AuthPromise;
-      const { session, issuer, page } = web3Auth_func();
-      console.log(session, issuer, page);
+      const { session, issuer, page, clientId } = web3Auth_func();
 
       if (session?.auth_server_online === false) {
         const testAuthServerResponse = await fetch(issuer, {
@@ -154,7 +159,7 @@
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
 
-          await metaMaskLogin({ issuer, session });
+          await metaMaskLogin({ issuer, clientId });
         } else if (session?.error) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
@@ -336,7 +341,6 @@
   const syncLogout = (event: StorageEvent) => {
     if (browser) {
       if (event.key === "user_logout") {
-        console.log("Web3Auth:syncLogout");
         try {
           if (JSON.parse(window.localStorage.getItem("user_logout"))) {
             window.localStorage.removeItem("user_login");
@@ -361,10 +365,8 @@
   };
 
   const syncLogin = (event: StorageEvent) => {
-    console.log("syncLogin - storage changed");
     if (browser) {
       if (event.key === "user_login") {
-        console.log("Web3Auth:syncLogin");
         try {
           window.localStorage.removeItem("user_logout");
           const userInfo = JSON.parse(
@@ -391,13 +393,15 @@
   };
 
   async function handleMount() {
-    console.log("Web3Auth:handleMount");
-    try {
-      console.log("Web3Auth:handleMount - adding event listeners");
-      window.addEventListener("storage", syncLogout);
-      window.addEventListener("storage", syncLogin);
-    } catch (err) {
-      console.error("Error adding storage event handlers", err);
+    
+    if (browser) {
+      try {
+        console.log("Web3Auth:handleMount - adding event listeners");
+        window.addEventListener("storage", syncLogout);
+        window.addEventListener("storage", syncLogin);
+      } catch (err) {
+        console.error("Error adding storage event handlers", err);
+      }
     }
 
     try {
@@ -477,11 +481,13 @@
     if (tokenTimeoutObj) {
       clearTimeout(tokenTimeoutObj);
     }
-    try {
-      window.removeEventListener("storage", syncLogout);
-      window.removeEventListener("storage", syncLogin);
-    } catch (err) {
-      console.error("Error removing storage event listeners", err);
+    if (browser) {
+      try {
+        window.removeEventListener("storage", syncLogout);
+        window.removeEventListener("storage", syncLogin);
+      } catch (err) {
+        console.error("Error removing storage event listeners", err);
+      }
     }
   });
 </script>
