@@ -27,7 +27,7 @@
     "jsonwebtoken": "8.5.1",
     "postcss": "8.4.1",
     "postcss-load-config": "3.1.0",
-    "prettier": "2.4.1",
+    "prettier": "2.5.0",
     "prettier-plugin-svelte": "2.5.0",
     "subscriptions-transport-ws": "0.11.0",
     "svelte": "3.44.2",
