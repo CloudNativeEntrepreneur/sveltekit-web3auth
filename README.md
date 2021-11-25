@@ -13,10 +13,10 @@ When the client side kicks in, it:
 
     [x] Checks for user and Auth server information in session variable
     [x] In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
-    [] Provides Login, Logout functionality
+    [x] Provides Login, Logout functionality
     [x] Initiates authorization flow, in case of protected component via Sveletkit Load method.
-    [] Logout in one browser tab initiates automatic logout from all tabs.
-    [] Prompt on all browser tabs and Page reloading on User Login.
+    [x] Logout in one browser tab initiates automatic logout from all tabs.
+    [x] Prompt on all browser tabs and Page reloading on User Login.
 
 Goal is complete JWT Implementation based on [Hasura Blog on BEST Practices for JWT AUTH](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/) in context of meta mask login and challenge/signature auth flow.
 
