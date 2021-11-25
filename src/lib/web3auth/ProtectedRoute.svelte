@@ -19,14 +19,13 @@
       // const web3AuthParams = web3authParamsFn($page.path, $page.params);
       if (!$session?.user || !$session?.accessToken) {
         try {
-          console.log("user or access token is missing", $session);
           await login(web3authPromise);
         } catch (e) {
           console.error(e);
         }
       } else {
-        if (isTokenExpired($session.accessToken)) {
-          console.log("access token is expired", $session);
+        const expired = isTokenExpired($session.accessToken);
+        if (expired) {
           await login(web3authPromise);
         }
       }

@@ -127,7 +127,6 @@ export const getUserSession: GetUserSessionFn = async (
               : "Unable to retrieve user Info",
           };
         } catch (e) {
-          // console.error('Error while refreshing accessToken; accessToken is invalid', e);
           throw {
             ...e,
           };
@@ -145,7 +144,7 @@ export const getUserSession: GetUserSessionFn = async (
             clientId,
             clientSecret
           );
-          // console.log(newTokenData);
+
           if (newTokenData?.error) {
             throw {
               error: newTokenData.error,
@@ -157,12 +156,7 @@ export const getUserSession: GetUserSessionFn = async (
             return await getUserSession(request, clientSecret);
           }
         }
-      } catch (e) {
-        console.error(
-          "Error while refreshing accessToken; accessToken is missing",
-          e
-        );
-      }
+      } catch (e) {} // eslint-disable-line no-empty
       try {
         const testAuthServerResponse = await fetch(web3authBaseUrl, {
           headers: {
@@ -186,7 +180,6 @@ export const getUserSession: GetUserSessionFn = async (
       };
     }
   } catch (err) {
-    console.error("hooks: getUserSession", err);
     request.locals.accessToken = "";
     request.locals.refreshToken = "";
     request.locals.userid = "";

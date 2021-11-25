@@ -1,6 +1,6 @@
-# sveltekit + web3 Auth
+# sveltekit + web3auth
 
-This project aims to integrate Web3 Auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server. Sveltekit hooks take care of :
+This project aims to integrate web3auth via MetaMask with a JWT Issuing auth server for use with APIs in Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server. Sveltekit hooks take care of :
 
     [x] Silent Refresh Workflow
     [x] Validating the client accessToken validity
@@ -48,15 +48,12 @@ Create an .env file in project root with following content
 VITE_WEB3_AUTH_ISSUER="http://localhost:8000"
 VITE_WEB3_AUTH_CLIENT_ID="local-public"
 VITE_WEB3_AUTH_CLIENT_SECRET="1439e34f-343e-4f71-bbc7-cc602dced84a"
-VITE_WEB3_AUTH_REDIRECT_URI="http://localhost:3000"
-VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI="http://localhost:3000"
-VITE_WEB3_AUTH_CLIENT_SCOPE="openid profile email roles"
+// VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI="http://localhost:3000" // optional, just set to enable
 VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES="5"
-VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT="/auth/refresh-token"
 VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT=true
-VITE_HASURA_GRAPHQL_URL=http://hasura.127.0.0.1.sslip.io/v1/graphql
-VITE_HASURA_GRAPHQL_INTERNAL_URL=http://hasura.127.0.0.1.sslip.io/v1/graphql
-VITE_HASURA_GRAPHQL_WS_URL=ws://hasura.127.0.0.1.sslip.io/v1/graphql
+VITE_HASURA_GRAPHQL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
+VITE_HASURA_GRAPHQL_INTERNAL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
+VITE_HASURA_GRAPHQL_WS_URL=ws://hasura.default.127.0.0.1.sslip.io/v1/graphql
 ```
 
 ### Inside your src/global.d.ts
@@ -66,11 +63,8 @@ interface ImportMetaEnv {
   VITE_WEB3_AUTH_ISSUER: string;
   VITE_WEB3_AUTH_CLIENT_ID: string;
   VITE_WEB3_AUTH_CLIENT_SECRET: string;
-  VITE_WEB3_AUTH_REDIRECT_URI: string;
   VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI?: string;
-  VITE_WEB3_AUTH_CLIENT_SCOPE: string;
   VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES: number;
-  VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT: string;
   VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT: boolean;
   VITE_HASURA_GRAPHQL_URL: string;
   VITE_HASURA_GRAPHQL_INTERNAL_URL: string;
@@ -80,42 +74,15 @@ interface ImportMetaEnv {
 
 ### REFESH_TOKEN_ENDPOINT
 
-Create a refreshToken endpoint as set in .env file (VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT) we have set /auth/refresh-token.
-As such, create file src/routes/auth/refresh-token.ts
+Create a refreshToken endpoint `/auth/refresh-token` by creating the file `src/routes/auth/refresh-token.ts`
 
 ```ts
-import { renewWeb3AuthToken, parseCookie } from "$lib";
+import { post as refreshToken } from "svetekit-web3auth/routes/auth/refresh-token";
 
-import type { Locals } from "$lib/types";
-import type { RequestHandler } from "@sveltejs/kit";
+const clientSecret = import.meta.env.VITE_WEB3AUTH_CLIENT_SECRET;
+const issuer = import.meta.env.VITE_WEB3AUTH_ISSUER;
 
-const issuer = `${import.meta.env.VITE_WEB3_AUTH_ISSUER}`;
-const clientId = `${import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}`;
-const clientSecret =
-  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
-  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
-/**
- * @type {import('@sveltejs/kit').RequestHandler}
- */
-export const post: RequestHandler<Locals, FormData> = async (request) => {
-  const cookie: any = parseCookie(request.headers.cookie);
-  const { userInfo } = cookie;
-  const user = JSON.parse(userInfo);
-  const data = await renewWeb3AuthToken(
-    user.refreshToken,
-    issuer,
-    clientId,
-    clientSecret
-  );
-
-  const response = {
-    body: {
-      ...data,
-    },
-  };
-
-  return response;
-};
+export const post = refreshToken(clientSecret, issuer);
 ```
 
 ### Inside your src/hooks.ts
@@ -126,29 +93,21 @@ import { userDetailsGenerator, getUserSession } from "$lib";
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
-const clientSecret =
-  process.env.VITE_WEB3_AUTH_CLIENT_SECRET ||
-  import.meta.env.VITE_WEB3_AUTH_CLIENT_SECRET;
+const clientSecret = import.meta.env.VITE_WEB3AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log("HOOKS: HANDLE", {
-    headers: request.headers,
-    locals: request.locals,
-  });
   // Initialization part
-  const userGen = userDetailsGenerator(request, clientSecret);
+  const userGen = userDetailsGenerator(request);
   const { value, done } = await userGen.next();
 
-  console.log("hooks: handle: userGen", { value, done });
   if (done) {
     const response = value;
     return response;
   }
 
   // Set Cookie attributes
-  request.locals.cookieAttributes = "Path=/; HttpOnly; SameSite=Lax;";
+  request.locals.cookieAttributes = "Path=/; HttpOnly;";
 
-  // Your code here -----------
   if (request.query.has("_method")) {
     request.method = request.query.get("_method").toUpperCase();
   }
@@ -174,7 +133,6 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
-  console.log("hooks: getSession");
   const userSession = await getUserSession(request, clientSecret);
   return userSession;
 };
@@ -191,13 +149,7 @@ export const getSession: GetSession = async (
 <Web3Auth
   issuer="{import.meta.env.VITE_WEB3_AUTH_ISSUER}"
   clientId="{import.meta.env.VITE_WEB3_AUTH_CLIENT_ID}"
-  scope="{import.meta.env.VITE_WEB3_AUTH_CLIENT_SCOPE}"
-  redirectURI="{import.meta.env.VITE_WEB3_AUTH_REDIRECT_URI}"
-  postLogoutRedirectURI="{import.meta.env"
-  .VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI}
-  refreshTokenEndpoint="{import.meta.env.VITE_WEB3_AUTH_REFRESH_TOKEN_ENDPOINT}"
-  refreshPageOnSessionTimeout="{import.meta.env"
-  .VITE_WEB3_AUTH_REFRESH_PAGE_ON_SESSION_TIMEOUT}
+  postLogoutRedirectURI="{import.meta.env.VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI}"
 >
   <slot />
 </Web3Auth>

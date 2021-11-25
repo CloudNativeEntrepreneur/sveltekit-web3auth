@@ -43,7 +43,7 @@
   <h1
     class="mb-4 p-4 text-5xl bg-pink-600 text-gray-200 font-semibold rounded-md shadow-md"
   >
-    Sveltekit + Web3 Auth
+    Sveltekit + web3auth
   </h1>
 
   {#if $isAuthenticated}

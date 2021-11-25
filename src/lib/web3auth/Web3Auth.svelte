@@ -13,7 +13,6 @@
   let web3;
 
   export const WEB3AUTH_CONTEXT_CLIENT_PROMISE = {};
-  export const WEB3AUTH_CONTEXT_REDIRECT_URI = "";
   export const WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI = "";
 
   import { writable } from "svelte/store";
@@ -38,8 +37,12 @@
     authError,
   };
 
-  const handleLoggedIn = (publicAddress: string) => (auth: any) => {
-    const user = JSON.parse(atob(auth.idToken.split(".")[1]).toString());
+  const onReceivedNewTokens = (tokens: {
+    accessToken: string;
+    idToken: string;
+    refreshToken: string;
+  }) => {
+    const user = JSON.parse(atob(tokens.idToken.split(".")[1]).toString());
     delete user.aud;
     delete user.exp;
     delete user.iat;
@@ -47,21 +50,29 @@
     delete user.sub;
     delete user.typ;
 
-    localStorage.removeItem("user_logout");
-    localStorage.setItem("user_login", JSON.stringify(user));
     AuthStore.isAuthenticated.set(true);
-    AuthStore.accessToken.set(auth.accessToken);
-    AuthStore.refreshToken.set(auth.refreshToken);
+    AuthStore.accessToken.set(tokens.accessToken);
+    AuthStore.refreshToken.set(tokens.refreshToken);
+    AuthStore.idToken.set(tokens.idToken);
     AuthStore.userInfo.set({
       ...user,
     });
+
     session.set({
-      userid: publicAddress,
-      accessToken: auth.accessToken,
-      refreshToken: auth.refreshToken,
+      userid: user.userid,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user,
       authServerOnline: true,
     });
+
+    return user;
+  };
+
+  const handleLoggedIn = (tokens: any) => {
+    const user = onReceivedNewTokens(tokens);
+    localStorage.removeItem("user_logout");
+    localStorage.setItem("user_login", JSON.stringify(user));
   };
 
   async function metaMaskLogin({ clientId }) {
@@ -94,9 +105,6 @@
 
       const publicAddress = coinbase.toLowerCase();
 
-      // Look if user with current publicAddress is already present on backend
-      console.log("Finding user with address", publicAddress);
-
       let user;
       let users;
       const usersWithPublicAddressResponse = await fetch(`/auth/users`, {
@@ -123,7 +131,7 @@
       const signedMessage = await handleSignMessage(web3)(user);
       const authResponse = await handleAuthenticate(clientId)(signedMessage);
 
-      await handleLoggedIn(publicAddress)(authResponse);
+      await handleLoggedIn(authResponse);
     } catch (err) {
       window.alert(err);
     }
@@ -154,6 +162,10 @@
           "invalid_token",
           "token_refresh_error",
         ];
+        console.log(
+          "relogin_initiate - session?.error?.error",
+          session?.error?.error
+        );
         const relogin_initiate = session?.error?.error
           ? relogin_initiate_error_list.includes(session.error.error)
           : false;
@@ -198,7 +210,6 @@
     web3authPromise: Web3AuthContextClientPromise,
     postLogoutRedirectURI?: string
   ) {
-    console.log("Web3Auth:logout");
     const web3authContextClientFn = await web3authPromise;
     const { clientId } = web3authContextClientFn();
 
@@ -223,9 +234,7 @@
         },
         method: "POST",
       });
-      let json = await result.json();
-
-      console.log("Log out", json);
+      await result.json();
     } catch (err) {
       console.error("Error logging out", err);
     }
@@ -289,11 +298,7 @@
   // props.
   export let issuer: string;
   export let clientId: string;
-  export let redirectURI: string;
   export let postLogoutRedirectURI: string;
-  export let scope: string;
-  export let refreshTokenEndpoint: string;
-  export let refreshPageOnSessionTimeout = false;
 
   const web3authContextClientFn: Web3AuthContextClientFn = () => {
     return {
@@ -308,12 +313,10 @@
     Promise.resolve(web3authContextClientFn);
 
   setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3authContextClientPromise);
-  setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirectURI);
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
   let tokenTimeoutObj = null;
   async function silentRefresh(refreshTokenToExchange: string) {
-    console.log("Web3Auth:silentRefresh");
     try {
       const { accessToken, refreshToken } = await tokenRefresh(
         web3authContextClientPromise,
@@ -340,15 +343,12 @@
       } else {
         throw {
           error: "invalid_grant",
-          error_description: "Session not active",
+          error_description: "Session is not active",
         };
       }
     } catch (e) {
       if (tokenTimeoutObj) {
         clearTimeout(tokenTimeoutObj);
-      }
-      if (refreshPageOnSessionTimeout) {
-        window.location.assign($page.path);
       }
     }
   }
@@ -360,17 +360,12 @@
           if (JSON.parse(window.localStorage.getItem("user_logout"))) {
             window.localStorage.removeItem("user_login");
 
+            AuthStore.isLoading.set(false);
             AuthStore.accessToken.set(null);
             AuthStore.refreshToken.set(null);
+            AuthStore.idToken.set(null);
+            AuthStore.userInfo.set(null);
             AuthStore.isAuthenticated.set(false);
-            AuthStore.authError.set({
-              error: "invalid_grant",
-              error_description: "Session is not active",
-            });
-            if (refreshPageOnSessionTimeout) {
-              console.log("refresh page on session timeout");
-              window.location.assign($page.path);
-            }
           }
         } catch (err) {
           console.error("Sync logout error", err);
@@ -417,7 +412,6 @@
 
     try {
       if ($session?.auth_server_online === false) {
-        console.log("Web3Auth:handleMount - testing Server", issuer);
         const testAuthServerResponse = await fetch(issuer, {
           headers: {
             "Content-Type": "application/json",
@@ -429,15 +423,11 @@
           };
         }
       } else {
-        console.log("Web3Auth:handleMount - loaded");
         AuthStore.isLoading.set(false);
         if (!$session.user) {
           AuthStore.isAuthenticated.set(false);
           AuthStore.accessToken.set(null);
           AuthStore.refreshToken.set(null);
-          // if (window.location.toString().includes("event=logout")) {
-          //   window.location.assign($page.path);
-          // }
         } else {
           AuthStore.isAuthenticated.set(true);
           AuthStore.accessToken.set($session.accessToken);
@@ -452,13 +442,12 @@
             skewedTimeoutDuration > 0
               ? skewedTimeoutDuration
               : skewedTimeoutDuration + tokenSkew * 1000;
+
           tokenTimeoutObj = setTimeout(async () => {
             await silentRefresh($session.refreshToken);
           }, timeoutDuration);
+
           AuthStore.authError.set(null);
-          if (window.location.toString().includes("code=")) {
-            window.location.assign($page.path);
-          }
 
           try {
             window.localStorage.setItem(
