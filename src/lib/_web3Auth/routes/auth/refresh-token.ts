@@ -35,6 +35,7 @@ export const post =
       },
     };
 
+    // Cookie is set based on locals value in next step
     request.locals.userid = parsedUserInfo.publicAddress;
     request.locals.user = parsedUserInfo;
     request.locals.accessToken = auth.accessToken;

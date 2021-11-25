@@ -29,6 +29,35 @@ export async function createAuthSession(
   }
 }
 
+export async function endAuthSession(options: {
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+  publicAddress: string;
+}): Promise<Web3AuthResponse> {
+  const { issuer, clientId, clientSecret, publicAddress } = options;
+
+  let auth;
+  const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
+
+  const logoutRequest = await fetch(`${issuer}/api/auth/logout`, {
+    body: JSON.stringify({ publicAddress }),
+    headers: {
+      Authorization,
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  if (logoutRequest.ok) {
+    auth = await logoutRequest.json();
+    const data = {
+      ...auth,
+    };
+    return data;
+  }
+}
+
 export async function getUsers(
   issuer: string,
   clientId: string,

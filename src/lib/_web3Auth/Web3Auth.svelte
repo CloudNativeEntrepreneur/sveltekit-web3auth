@@ -200,7 +200,7 @@
   ) {
     console.log("Web3Auth:logout");
     const web3Auth_func = await web3AuthPromise;
-    const web3Params = web3Auth_func();
+    const { clientId } = web3Auth_func();
 
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
@@ -215,7 +215,9 @@
 
     try {
       let result = await fetch("/auth/logout", {
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          clientId,
+        }),
         headers: {
           "Content-Type": "application/json",
         },

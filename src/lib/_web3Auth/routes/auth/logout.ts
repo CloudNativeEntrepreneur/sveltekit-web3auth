@@ -1,5 +1,7 @@
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
+import { endAuthSession } from "$lib/_web3Auth/auth-api";
+import { parseCookie } from "$lib";
 
 /**
  * @type {import('@sveltejs/kit').RequestHandler}
@@ -7,11 +9,18 @@ import type { RequestHandler } from "@sveltejs/kit";
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {
-    const cookie = `userInfo=${JSON.stringify({
-      userid: null,
-      user: null,
-      refreshToken: null,
-    })};`;
+    const clientId = (request.body as any).clientId;
+    const cookie: any = parseCookie(request.headers.cookie);
+    const { userInfo } = cookie;
+    const user = JSON.parse(userInfo);
+    const publicAddress = user.userid;
+
+    const auth = await endAuthSession({
+      issuer,
+      clientId,
+      clientSecret,
+      publicAddress,
+    });
 
     const response = {
       body: {},
@@ -22,5 +31,6 @@ export const post =
     request.locals.user = null;
     request.locals.accessToken = null;
     request.locals.refreshToken = null;
+
     return response;
   };
