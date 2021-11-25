@@ -31,7 +31,7 @@ export const post =
 
     const response = {
       body: {
-        ...auth
+        ...auth,
       },
     };
 
