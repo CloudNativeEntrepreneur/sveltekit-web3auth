@@ -2,7 +2,11 @@
   import { browser } from "$app/env";
   import { session, page } from "$app/stores";
   import { getContext } from "svelte";
-  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE, login, isAuthenticated } from "./Web3Auth.svelte";
+  import {
+    WEB3AUTH_CONTEXT_CLIENT_PROMISE,
+    login,
+    isAuthenticated,
+  } from "./Web3Auth.svelte";
   import type { Web3AuthContextClientPromise } from "../types";
   import { isTokenExpired } from "./jwt";
 
