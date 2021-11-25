@@ -20,11 +20,11 @@ spec:
         - containerPort: {{ .Values.service.internalPort }}
         env:
         - name: VITE_HASURA_GRAPHQL_URL
-          value: https://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+          value: https://example-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
         - name: VITE_HASURA_GRAPHQL_INTERNAL_URL
-          value: https://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+          value: https://example-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
         - name: VITE_HASURA_GRAPHQL_WS_URL
-          value: wss://sveltekit-web3auth-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
+          value: wss://example-hasura.{{ .Release.Namespace }}.jx.cloudnativeentrepreneur.dev/v1/graphql
 {{- range $pkey, $pval := .Values.env }}
         - name: {{ $pkey }}
           value: {{ quote $pval }}
