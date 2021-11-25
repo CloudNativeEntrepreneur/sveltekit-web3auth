@@ -14,7 +14,7 @@
       <div>
         <strong>Your roles:</strong>
         <ul>
-          {#each $session.user.roles as role}
+          {#each $session?.user?.roles as role}
             <li>{role}</li>
           {/each}
         </ul>
