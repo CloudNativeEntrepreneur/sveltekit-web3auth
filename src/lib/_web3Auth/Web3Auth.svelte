@@ -39,8 +39,13 @@
   };
 
   const handleLoggedIn = (publicAddress: string) => (auth: any) => {
-    const user = JSON.parse(atob(auth.accessToken.split(".")[1]).toString());
+    const user = JSON.parse(atob(auth.idToken.split(".")[1]).toString());
+    delete user.aud;
+    delete user.exp;
     delete user.iat;
+    delete user.iss;
+    delete user.sub;
+    delete user.typ;
 
     localStorage.removeItem("user_logout");
     localStorage.setItem("user_login", JSON.stringify(user));
@@ -48,7 +53,7 @@
     AuthStore.accessToken.set(auth.accessToken);
     AuthStore.refreshToken.set(auth.refreshToken);
     AuthStore.userInfo.set({
-      publicAddress,
+      ...user,
     });
     session.set({
       userid: publicAddress,
@@ -382,12 +387,10 @@
           );
           if (
             userInfo &&
-            (!$session.user ||
-              $session.user?.preferred_username !==
-                userInfo?.preferred_username)
+            (!$session.user || $session.user?.username !== userInfo?.username)
           ) {
             const answer = confirm(
-              `Welcome ${userInfo?.preferred_username || "user"}. Refresh page!`
+              `Welcome ${userInfo?.username || "user"}. Refresh page!`
             );
             if (answer) {
               window.location.assign($page.path);
