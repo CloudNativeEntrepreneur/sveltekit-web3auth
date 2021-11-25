@@ -14,11 +14,11 @@ export {
   userInfo,
   // @ts-ignore
   authError,
-} from "./_web3Auth/Web3Auth.svelte";
-export { default as LoginButton } from "./_web3Auth/LoginButton.svelte";
-export { default as LogoutButton } from "./_web3Auth/LogoutButton.svelte";
-export { default as RefreshTokenButton } from "./_web3Auth/RefreshTokenButton.svelte";
-export { default as ProtectedRoute } from "./_web3Auth/ProtectedRoute.svelte";
-export { renewWeb3AuthToken } from "./_web3Auth/auth-api";
-export { userDetailsGenerator, getUserSession } from "./_web3Auth/hooks";
-export { parseCookie } from "./_web3Auth/cookie";
+} from "./web3auth/Web3Auth.svelte";
+export { default as LoginButton } from "./web3auth/LoginButton.svelte";
+export { default as LogoutButton } from "./web3auth/LogoutButton.svelte";
+export { default as RefreshTokenButton } from "./web3auth/RefreshTokenButton.svelte";
+export { default as ProtectedRoute } from "./web3auth/ProtectedRoute.svelte";
+export { renewWeb3AuthToken } from "./web3auth/auth-api";
+export { userDetailsGenerator, getUserSession } from "./web3auth/hooks";
+export { parseCookie } from "./web3auth/cookie";

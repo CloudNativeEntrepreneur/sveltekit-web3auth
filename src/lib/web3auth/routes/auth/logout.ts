@@ -1,6 +1,6 @@
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
-import { endAuthSession } from "$lib/_web3Auth/auth-api";
+import { endAuthSession } from "$lib/web3auth/auth-api";
 import { parseCookie } from "$lib";
 
 /**

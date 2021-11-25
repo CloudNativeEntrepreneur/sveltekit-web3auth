@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { createAuthSession } from "$lib/_web3Auth/auth-api";
+import { createAuthSession } from "$lib/web3auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 

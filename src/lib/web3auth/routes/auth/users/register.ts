@@ -1,4 +1,4 @@
-import { registerUser } from "$lib/_web3Auth/auth-api";
+import { registerUser } from "$lib/web3auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 

@@ -1,5 +1,5 @@
 import type { Locals } from "$lib/types";
-import { getUsers } from "$lib/_web3Auth/auth-api";
+import { getUsers } from "$lib/web3auth/auth-api";
 import type { RequestHandler } from "@sveltejs/kit";
 
 /**
