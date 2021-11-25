@@ -16,7 +16,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
   }
 
   // Set Cookie attributes
-  request.locals.cookieAttributes = "Path=/; HttpOnly; SameSite=Lax;";
+  request.locals.cookieAttributes = "Path=/; HttpOnly;";
 
   // Your code here -----------
   if (request.query.has("_method")) {

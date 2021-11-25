@@ -19,7 +19,7 @@ export const injectCookies = (
     user: `${serialized_user}`,
   };
   responseCookies["refreshToken"] = `${request.locals.refreshToken}`;
-  let cookieAtrributes = "Path=/; HttpOnly; SameSite=Lax;";
+  let cookieAtrributes = "Path=/; HttpOnly;";
   if (request.locals?.cookieAttributes) {
     cookieAtrributes = request.locals.cookieAttributes;
   }

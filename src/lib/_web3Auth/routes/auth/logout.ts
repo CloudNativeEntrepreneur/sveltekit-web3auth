@@ -14,14 +14,10 @@ export const post =
     })};`;
 
     const response = {
-      body: {
-        status: "success",
-      },
-      headers: {
-        "Set-Cookie": `${cookie}; SameSite=Lax; HttpOnly;`,
-      },
+      body: {},
     };
 
+    // Cookie is set based on locals value in next step
     request.locals.userid = null;
     request.locals.user = null;
     request.locals.accessToken = null;

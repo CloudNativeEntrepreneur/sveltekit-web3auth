@@ -1,7 +1,8 @@
-import { renewWeb3AuthToken, parseCookie } from "$lib";
-
+import jwt from "jsonwebtoken";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
+import { renewWeb3AuthToken, parseCookie } from "$lib";
+
 /**
  * @type {import('@sveltejs/kit').RequestHandler}
  */
@@ -13,18 +14,31 @@ export const post =
     const { userInfo } = cookie;
     const user = JSON.parse(userInfo);
 
-    const data = await renewWeb3AuthToken(
+    const auth = await renewWeb3AuthToken(
       user.refreshToken,
       issuer,
       clientId,
       clientSecret
     );
 
+    const parsedUserInfo = jwt.verify(auth.idToken, clientSecret);
+    delete parsedUserInfo.aud;
+    delete parsedUserInfo.exp;
+    delete parsedUserInfo.iat;
+    delete parsedUserInfo.iss;
+    delete parsedUserInfo.sub;
+    delete parsedUserInfo.typ;
+
     const response = {
       body: {
-        ...data,
+        ...auth
       },
     };
+
+    request.locals.userid = parsedUserInfo.publicAddress;
+    request.locals.user = parsedUserInfo;
+    request.locals.accessToken = auth.accessToken;
+    request.locals.refreshToken = auth.refreshToken;
 
     return response;
   };

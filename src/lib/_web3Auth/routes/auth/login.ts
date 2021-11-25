@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { createAuthSession } from "$lib/_web3Auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
@@ -20,7 +21,7 @@ export const post =
       signature
     );
 
-    const user = JSON.parse(atob(auth.idToken.split(".")[1]).toString());
+    const user = jwt.verify(auth.idToken, clientSecret);
     delete user.aud;
     delete user.exp;
     delete user.iat;
@@ -28,19 +29,13 @@ export const post =
     delete user.sub;
     delete user.typ;
 
-    const cookie = `userInfo=${JSON.stringify({
-      userid: user.publicAddress,
-      user,
-      refreshToken: auth.refreshToken,
-    })};`;
-
     const response = {
-      body: JSON.stringify(auth),
-      headers: {
-        "Set-Cookie": `${cookie}; SameSite=Lax; HttpOnly;`,
+      body: {
+        ...auth
       },
     };
 
+    // Cookie is set in next step by request.locals
     request.locals.userid = user.publicAddress;
     request.locals.user = user;
     request.locals.accessToken = auth.accessToken;
