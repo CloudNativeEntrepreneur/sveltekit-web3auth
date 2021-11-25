@@ -97,7 +97,7 @@ export const getUserSession: GetUserSessionFn = async (
           if (
             data?.error &&
             request.locals?.retries <
-              import.meta.env.VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES
+              import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
           ) {
             const newTokenData = await renewWeb3AuthToken(
               request.locals.refreshToken,
@@ -137,7 +137,7 @@ export const getUserSession: GetUserSessionFn = async (
       try {
         if (
           request.locals?.retries <
-          import.meta.env.VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES
+          import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
         ) {
           const newTokenData = await renewWeb3AuthToken(
             request.locals.refreshToken,
