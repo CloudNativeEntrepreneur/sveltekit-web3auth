@@ -131,8 +131,8 @@
 
   export async function login(web3authPromise: Web3AuthContextClientPromise) {
     try {
-      const web3auth_func = await web3authPromise;
-      const { session, issuer, page, clientId } = web3auth_func();
+      const web3authContextClientFn = await web3authPromise;
+      const { session, issuer, page, clientId } = web3authContextClientFn();
 
       if (session?.auth_server_online === false) {
         const testAuthServerResponse = await fetch(issuer, {
@@ -199,8 +199,8 @@
     postLogoutRedirectURI?: string
   ) {
     console.log("Web3Auth:logout");
-    const web3auth_func = await web3authPromise;
-    const { clientId } = web3auth_func();
+    const web3authContextClientFn = await web3authPromise;
+    const { clientId } = web3authContextClientFn();
 
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
@@ -242,8 +242,8 @@
     web3authPromise: Web3AuthContextClientPromise,
     refreshTokenToExchange
   ) => {
-    const web3auth_func = await web3authPromise;
-    const { clientId } = web3auth_func();
+    const web3authContextClientFn = await web3authPromise;
+    const { clientId } = web3authContextClientFn();
     try {
       const res = await fetch("/auth/refresh-token", {
         method: "POST",
@@ -295,7 +295,7 @@
   export let refreshTokenEndpoint: string;
   export let refreshPageOnSessionTimeout = false;
 
-  const web3auth_func: Web3AuthContextClientFn = () => {
+  const web3authContextClientFn: Web3AuthContextClientFn = () => {
     return {
       session: $session,
       issuer,
@@ -304,10 +304,10 @@
     };
   };
 
-  const web3_auth_promise: Web3AuthContextClientPromise =
-    Promise.resolve(web3auth_func);
+  const web3authContextClientPromise: Web3AuthContextClientPromise =
+    Promise.resolve(web3authContextClientFn);
 
-  setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3_auth_promise);
+  setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3authContextClientPromise);
   setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirectURI);
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
@@ -316,7 +316,7 @@
     console.log("Web3Auth:silentRefresh");
     try {
       const { accessToken, refreshToken } = await tokenRefresh(
-        web3_auth_promise,
+        web3authContextClientPromise,
         refreshTokenToExchange
       );
 
