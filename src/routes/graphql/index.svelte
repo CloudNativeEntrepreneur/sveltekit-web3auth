@@ -1,5 +1,5 @@
 <script context="module">
-  import { graphQLClient } from "$lib/data/urql";
+  import { graphQLClient } from "$lib/graphQL/urql";
 
   const defaults = {
     limit: 10,
