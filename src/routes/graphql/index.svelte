@@ -45,14 +45,23 @@
 
     const result = await serverGQLClient.query(QUERY, variables).toPromise();
     const { data } = result;
-    const { messages } = data;
-
-    return {
-      props: {
-        messages,
-        count: data.messages_aggregate.aggregate.count,
-      },
-    };
+    if (data) {
+      const { messages } = data;
+  
+      return {
+        props: {
+          messages,
+          count: data.messages_aggregate.aggregate.count,
+        },
+      };
+    } else {
+      return {
+        props: {
+          messages: [],
+          count: 0
+        }
+      }
+    }
   }
 </script>
 
