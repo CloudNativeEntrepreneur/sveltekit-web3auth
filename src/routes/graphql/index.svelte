@@ -47,7 +47,7 @@
     const { data } = result;
     if (data) {
       const { messages } = data;
-  
+
       return {
         props: {
           messages,
@@ -58,9 +58,9 @@
       return {
         props: {
           messages: [],
-          count: 0
-        }
-      }
+          count: 0,
+        },
+      };
     }
   }
 </script>
@@ -80,7 +80,8 @@
     <ol>
       {#each messages as message}
         <li>
-          <strong>{message.publicAddress} ({message.sentAt}):</strong> {message.message}
+          <strong>{message.publicAddress} ({message.sentAt}):</strong>
+          {message.message}
         </li>
       {/each}
     </ol>
