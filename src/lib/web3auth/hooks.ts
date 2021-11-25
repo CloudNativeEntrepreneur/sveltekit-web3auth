@@ -18,7 +18,7 @@ import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
 const { clientId, issuer } = config;
 
-const web3AuthBaseUrl = issuer;
+const web3authBaseUrl = issuer;
 
 // This function is recursive - if a user does not have an access token, but a refresh token
 // it attempts to refresh the access token, and calls itself again recursively, this time
@@ -48,7 +48,7 @@ export const getUserSession: GetUserSessionFn = async (
       }
 
       try {
-        const testAuthServerResponse = await fetch(web3AuthBaseUrl, {
+        const testAuthServerResponse = await fetch(web3authBaseUrl, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -66,7 +66,7 @@ export const getUserSession: GetUserSessionFn = async (
       }
 
       console.log("hooks: getUserSession: /userinfo");
-      const res = await fetch(`${web3AuthBaseUrl}/userinfo`, {
+      const res = await fetch(`${web3authBaseUrl}/userinfo`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${request.locals.accessToken}`,
@@ -101,7 +101,7 @@ export const getUserSession: GetUserSessionFn = async (
           ) {
             const newTokenData = await renewWeb3AuthToken(
               request.locals.refreshToken,
-              web3AuthBaseUrl,
+              web3authBaseUrl,
               clientId,
               clientSecret
             );
@@ -141,7 +141,7 @@ export const getUserSession: GetUserSessionFn = async (
         ) {
           const newTokenData = await renewWeb3AuthToken(
             request.locals.refreshToken,
-            web3AuthBaseUrl,
+            web3authBaseUrl,
             clientId,
             clientSecret
           );
@@ -164,7 +164,7 @@ export const getUserSession: GetUserSessionFn = async (
         );
       }
       try {
-        const testAuthServerResponse = await fetch(web3AuthBaseUrl, {
+        const testAuthServerResponse = await fetch(web3authBaseUrl, {
           headers: {
             "Content-Type": "application/json",
           },

@@ -7,7 +7,7 @@
   } from "./Web3Auth.svelte";
   import type { Web3AuthContextClientPromise } from "../types";
 
-  const web3AuthPromise: Web3AuthContextClientPromise = getContext(
+  const web3authPromise: Web3AuthContextClientPromise = getContext(
     WEB3AUTH_CONTEXT_CLIENT_PROMISE
   );
 
@@ -17,7 +17,7 @@
 
 <button
   class={clazz}
-  on:click|preventDefault={() => tokenRefresh(web3AuthPromise, $refreshToken)}
+  on:click|preventDefault={() => tokenRefresh(web3authPromise, $refreshToken)}
 >
   <slot />
 </button>

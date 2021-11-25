@@ -129,10 +129,10 @@
     }
   }
 
-  export async function login(web3AuthPromise: Web3AuthContextClientPromise) {
+  export async function login(web3authPromise: Web3AuthContextClientPromise) {
     try {
-      const web3Auth_func = await web3AuthPromise;
-      const { session, issuer, page, clientId } = web3Auth_func();
+      const web3auth_func = await web3authPromise;
+      const { session, issuer, page, clientId } = web3auth_func();
 
       if (session?.auth_server_online === false) {
         const testAuthServerResponse = await fetch(issuer, {
@@ -195,12 +195,12 @@
   }
 
   export async function logout(
-    web3AuthPromise: Web3AuthContextClientPromise,
+    web3authPromise: Web3AuthContextClientPromise,
     postLogoutRedirectURI?: string
   ) {
     console.log("Web3Auth:logout");
-    const web3Auth_func = await web3AuthPromise;
-    const { clientId } = web3Auth_func();
+    const web3auth_func = await web3authPromise;
+    const { clientId } = web3auth_func();
 
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
@@ -239,11 +239,11 @@
   }
 
   export const tokenRefresh = async (
-    web3AuthPromise: Web3AuthContextClientPromise,
+    web3authPromise: Web3AuthContextClientPromise,
     refreshTokenToExchange
   ) => {
-    const web3Auth_func = await web3AuthPromise;
-    const { clientId } = web3Auth_func();
+    const web3auth_func = await web3authPromise;
+    const { clientId } = web3auth_func();
     try {
       const res = await fetch("/auth/refresh-token", {
         method: "POST",
@@ -295,7 +295,7 @@
   export let refreshTokenEndpoint: string;
   export let refreshPageOnSessionTimeout = false;
 
-  const web3Auth_func: Web3AuthContextClientFn = () => {
+  const web3auth_func: Web3AuthContextClientFn = () => {
     return {
       session: $session,
       issuer,
@@ -305,7 +305,7 @@
   };
 
   const web3_auth_promise: Web3AuthContextClientPromise =
-    Promise.resolve(web3Auth_func);
+    Promise.resolve(web3auth_func);
 
   setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3_auth_promise);
   setContext(WEB3AUTH_CONTEXT_REDIRECT_URI, redirectURI);

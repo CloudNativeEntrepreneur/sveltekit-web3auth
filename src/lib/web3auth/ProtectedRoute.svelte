@@ -10,22 +10,22 @@
 
   const loadUser = async () => {
     if (browser) {
-      const web3AuthPromise: Web3AuthContextClientPromise = getContext(
+      const web3authPromise: Web3AuthContextClientPromise = getContext(
         WEB3AUTH_CONTEXT_CLIENT_PROMISE
       );
-      const web3Auth_func = await web3AuthPromise;
-      const web3Params = web3Auth_func($page.path, $page.params);
+      const web3auth_func = await web3authPromise;
+      const web3Params = web3auth_func($page.path, $page.params);
       if (!$session?.user || !$session?.accessToken) {
         try {
           console.log("user or access token is missing", $session);
-          await login(web3AuthPromise);
+          await login(web3authPromise);
         } catch (e) {
           console.error(e);
         }
       } else {
         if (isTokenExpired($session.accessToken)) {
           console.log("access token is expired", $session);
-          await login(web3AuthPromise);
+          await login(web3authPromise);
         }
         isAuthenticated = true;
       }

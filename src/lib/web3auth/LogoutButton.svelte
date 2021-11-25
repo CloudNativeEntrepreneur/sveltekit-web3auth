@@ -7,7 +7,7 @@
   } from "./Web3Auth.svelte";
   import type { Web3AuthContextClientPromise } from "../types";
 
-  const web3AuthPromise: Web3AuthContextClientPromise = getContext(
+  const web3authPromise: Web3AuthContextClientPromise = getContext(
     WEB3AUTH_CONTEXT_CLIENT_PROMISE
   );
   const postLogoutRedirectURI: string = getContext(
@@ -20,7 +20,7 @@
 
 <button
   class={clazz}
-  on:click|preventDefault={() => logout(web3AuthPromise, postLogoutRedirectURI)}
+  on:click|preventDefault={() => logout(web3authPromise, postLogoutRedirectURI)}
 >
   <slot />
 </button>
