@@ -1,6 +1,6 @@
-import { registerUser } from "$lib/web3auth/auth-api";
-import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
+import { registerUser } from "../../../auth-api";
+import type { Locals } from "../../../../types";
 
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>

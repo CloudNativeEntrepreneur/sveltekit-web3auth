@@ -1,6 +1,7 @@
 <script context="module" lang="ts">
   import { setContext } from "svelte";
   import { onMount, onDestroy } from "svelte";
+  import { writable } from "svelte/store";
   import { browser } from "$app/env";
   import { page, session } from "$app/stores";
   import type {
@@ -15,7 +16,6 @@
   export const WEB3AUTH_CONTEXT_CLIENT_PROMISE = {};
   export const WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI = "";
 
-  import { writable } from "svelte/store";
   /**
    * Stores
    */
@@ -473,19 +473,21 @@
   }
   onMount(handleMount);
 
-  onDestroy(() => {
-    if (tokenTimeoutObj) {
-      clearTimeout(tokenTimeoutObj);
-    }
-    if (browser) {
-      try {
-        window.removeEventListener("storage", syncLogout);
-        window.removeEventListener("storage", syncLogin);
-      } catch (err) {
-        console.error("Error removing storage event listeners", err);
-      }
-    }
-  });
+  // TODO: this breaks when packaged
+  // -----
+  // onDestroy(() => {
+  //   if (browser) {
+  //     if (tokenTimeoutObj) {
+  //       clearTimeout(tokenTimeoutObj);
+  //     }
+  //     try {
+  //       window.removeEventListener("storage", syncLogout);
+  //       window.removeEventListener("storage", syncLogin);
+  //     } catch (err) {
+  //       console.error("Error removing storage event listeners", err);
+  //     }
+  //   }
+  // });
 </script>
 
 <slot />

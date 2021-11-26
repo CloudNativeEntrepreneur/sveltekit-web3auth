@@ -1,7 +1,7 @@
-import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
-import { endAuthSession } from "$lib/web3auth/auth-api";
-import { parseCookie } from "$lib";
+import type { Locals } from "../../../types";
+import { endAuthSession } from "../../auth-api";
+import { parseCookie } from "../../cookie";
 
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>

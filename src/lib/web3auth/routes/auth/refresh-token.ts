@@ -1,7 +1,8 @@
-import jwt from "jsonwebtoken";
-import type { Locals } from "$lib/types";
+import jwtDecode from "jwt-decode";
+import type { Locals } from "../../../types";
 import type { RequestHandler } from "@sveltejs/kit";
-import { renewWeb3AuthToken, parseCookie } from "$lib";
+import { renewWeb3AuthToken } from "../../auth-api";
+import { parseCookie } from "../../cookie";
 
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
@@ -18,7 +19,7 @@ export const post =
       clientSecret
     );
 
-    const parsedUserInfo = jwt.verify(auth.idToken, clientSecret);
+    const parsedUserInfo: any = jwtDecode(auth.idToken);
     delete parsedUserInfo.aud;
     delete parsedUserInfo.exp;
     delete parsedUserInfo.iat;

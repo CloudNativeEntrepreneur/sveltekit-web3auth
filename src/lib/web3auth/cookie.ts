@@ -1,7 +1,3 @@
-const decode = decodeURIComponent;
-const encode = encodeURIComponent;
-const pairSplitRegExp = /; */;
-
 /**
  * RegExp to match field-content in RFC 7230 sec 3.2
  *
@@ -13,6 +9,10 @@ const pairSplitRegExp = /; */;
 // const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 
 export const parseCookie = (str: string, options?: any) => {
+  const decode = decodeURIComponent;
+  const encode = encodeURIComponent;
+  const pairSplitRegExp = /; */;
+
   if (typeof str !== "string") {
     throw new TypeError("argument str must be a string");
   }

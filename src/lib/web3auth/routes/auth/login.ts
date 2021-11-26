@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwtDecode from "jwt-decode";
 import { createAuthSession } from "$lib/web3auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
@@ -18,7 +18,7 @@ export const post =
       signature
     );
 
-    const user = jwt.verify(auth.idToken, clientSecret);
+    const user: any = jwtDecode(auth.idToken);
     delete user.aud;
     delete user.exp;
     delete user.iat;
