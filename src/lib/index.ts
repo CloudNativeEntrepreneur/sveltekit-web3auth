@@ -19,7 +19,7 @@ export { default as LoginButton } from "./web3auth/LoginButton.svelte";
 export { default as LogoutButton } from "./web3auth/LogoutButton.svelte";
 export { default as RefreshTokenButton } from "./web3auth/RefreshTokenButton.svelte";
 export { default as ProtectedRoute } from "./web3auth/ProtectedRoute.svelte";
-export { renewWeb3AuthToken } from "./web3auth/auth-api";
+export { renewWeb3AuthToken, createAuthSession, endAuthSession, getUsers, registerUser } from "./web3auth/auth-api";
 export { userDetailsGenerator, getUserSession } from "./web3auth/hooks";
 export { parseCookie } from "./web3auth/cookie";
 export { getServerOnlyEnvVar } from "./getServerOnlyEnvVar";
