@@ -50,9 +50,9 @@ VITE_WEB3_AUTH_CLIENT_ID="local-public"
 VITE_WEB3_AUTH_CLIENT_SECRET="1439e34f-343e-4f71-bbc7-cc602dced84a"
 // VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI="http://localhost:3000" // optional, just set to enable
 VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES="5"
-VITE_HASURA_GRAPHQL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
-VITE_HASURA_GRAPHQL_INTERNAL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
-VITE_HASURA_GRAPHQL_WS_URL=ws://hasura.default.127.0.0.1.sslip.io/v1/graphql
+VITE_GRAPHQL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
+VITE_GRAPHQL_INTERNAL_URL=http://hasura.default.127.0.0.1.sslip.io/v1/graphql
+VITE_GRAPHQL_WS_URL=ws://hasura.default.127.0.0.1.sslip.io/v1/graphql
 ```
 
 ### Inside your src/global.d.ts
@@ -64,9 +64,9 @@ interface ImportMetaEnv {
   VITE_WEB3_AUTH_CLIENT_SECRET: string;
   VITE_WEB3_AUTH_POST_LOGOUT_REDIRECT_URI?: string;
   VITE_WEB3_AUTH_TOKEN_REFRESH_MAX_RETRIES: number;
-  VITE_HASURA_GRAPHQL_URL: string;
-  VITE_HASURA_GRAPHQL_INTERNAL_URL: string;
-  VITE_HASURA_GRAPHQL_WS_URL: string;
+  VITE_GRAPHQL_URL: string;
+  VITE_GRAPHQL_INTERNAL_URL: string;
+  VITE_GRAPHQL_WS_URL: string;
 }
 ```
 
