@@ -22,3 +22,4 @@ export { default as ProtectedRoute } from "./web3auth/ProtectedRoute.svelte";
 export { renewWeb3AuthToken } from "./web3auth/auth-api";
 export { userDetailsGenerator, getUserSession } from "./web3auth/hooks";
 export { parseCookie } from "./web3auth/cookie";
+export { getServerOnlyEnv } from "./getServerOnlyEnv";
