@@ -3,9 +3,6 @@ import { createAuthSession } from "$lib/web3auth/auth-api";
 import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 
-/**
- * @type {import('@sveltejs/kit').RequestHandler}
- */
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {

@@ -1,5 +1,0 @@
-export const VITE_HASURA_GRAPHQL_URL = import.meta.env.VITE_HASURA_GRAPHQL_URL;
-export const VITE_HASURA_GRAPHQL_INTERNAL_URL = import.meta.env
-  .VITE_HASURA_GRAPHQL_INTERNAL_URL;
-export const VITE_HASURA_GRAPHQL_WS_URL = import.meta.env
-  .VITE_HASURA_GRAPHQL_WS_URL;

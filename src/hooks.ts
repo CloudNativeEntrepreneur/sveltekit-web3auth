@@ -6,10 +6,14 @@ import {
 } from "$lib";
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
+import { config } from "./config";
 
+const issuer = config.web3auth.issuer;
+const clientId = config.web3auth.clientId;
 const clientSecret =
   getServerOnlyEnvVar(process, "WEB3AUTH_CLIENT_SECRET") ||
-  import.meta.env.VITE_WEB3AUTH_CLIENT_SECRET;
+  config.web3auth.clientSecret;
+const refreshTokenMaxRetries = config.web3auth.refreshTokenMaxRetries;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
   // Initialization part
@@ -49,6 +53,12 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
-  const userSession = await getUserSession(request, clientSecret);
+  const userSession = await getUserSession(
+    request,
+    issuer,
+    clientId,
+    clientSecret,
+    refreshTokenMaxRetries
+  );
   return userSession;
 };

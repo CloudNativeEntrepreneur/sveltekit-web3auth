@@ -3,9 +3,6 @@ import type { RequestHandler } from "@sveltejs/kit";
 import { endAuthSession } from "$lib/web3auth/auth-api";
 import { parseCookie } from "$lib";
 
-/**
- * @type {import('@sveltejs/kit').RequestHandler}
- */
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {
