@@ -1,9 +1,15 @@
 import type { Handle, GetSession } from "@sveltejs/kit";
-import { userDetailsGenerator, getUserSession } from "$lib";
+import {
+  userDetailsGenerator,
+  getUserSession,
+  getServerOnlyEnvVar,
+} from "$lib";
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 
-const clientSecret = import.meta.env.VITE_WEB3AUTH_CLIENT_SECRET;
+const clientSecret =
+  getServerOnlyEnvVar(process, "WEB3AUTH_CLIENT_SECRET") ||
+  import.meta.env.VITE_WEB3AUTH_CLIENT_SECRET;
 
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
   // Initialization part

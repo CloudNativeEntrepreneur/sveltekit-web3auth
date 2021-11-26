@@ -34,17 +34,13 @@ export const getUserSession: GetUserSessionFn = async (
         request.locals.userid &&
         !isTokenExpired(request.locals.accessToken)
       ) {
-        const isTokenActive = true;
-
-        if (isTokenActive) {
-          return {
-            user: { ...request.locals.user },
-            accessToken: request.locals.accessToken,
-            refreshToken: request.locals.refreshToken,
-            userid: request.locals.user.sub,
-            auth_server_online: true,
-          };
-        }
+        return {
+          user: { ...request.locals.user },
+          accessToken: request.locals.accessToken,
+          refreshToken: request.locals.refreshToken,
+          userid: request.locals.user.sub,
+          auth_server_online: true,
+        };
       }
 
       try {
