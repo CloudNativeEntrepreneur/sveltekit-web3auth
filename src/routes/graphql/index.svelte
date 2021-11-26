@@ -3,6 +3,8 @@
   // you'd probably use normal $lib/config here, but if I did it'd be part of the package
   // which wouldn't work... so plain old relative import gets the job done.
   import { config } from "../../config/index";
+  import ws from "ws";
+  import * as stws from "subscriptions-transport-ws";
 
   const defaults = {
     limit: 10,
@@ -36,7 +38,7 @@
     }
   `;
 
-  export async function load({ page, session }) {
+  export async function load({ page, session, fetch }) {
     const variables = {
       limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
       fromFilter: `%${page.query.get("fromFilter") || ""}%`,
@@ -44,7 +46,13 @@
       offset: parseInt(page.query.get("offset"), 10) || defaults.offset,
     };
 
-    let serverGQLClient = graphQLClient(session, config.graphql);
+    let serverGQLClient = graphQLClient(
+      session,
+      config.graphql,
+      fetch,
+      ws,
+      stws
+    );
 
     const result = await serverGQLClient.query(QUERY, variables).toPromise();
     const { data } = result;

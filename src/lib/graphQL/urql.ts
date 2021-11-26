@@ -6,11 +6,8 @@ import {
   cacheExchange,
   fetchExchange,
 } from "@urql/svelte";
-import { accessToken } from "$lib";
-import fetch from "cross-fetch";
+import { accessToken } from "../web3auth/Web3Auth.svelte";
 import { devtoolsExchange } from "@urql/devtools";
-import ws from "ws";
-import * as stws from "subscriptions-transport-ws";
 import { browser } from "$app/env";
 import { get } from "svelte/store";
 
@@ -20,9 +17,13 @@ export const graphQLClient = (
     ws: string;
     http: string;
     httpInternal?: string;
-  }
+  },
+  fetch,
+  ws,
+  stws
 ) => {
   const isServerSide = !browser;
+
   const subscriptionClient = new stws.SubscriptionClient(
     graphQLConfig.ws,
     {

@@ -13,4 +13,4 @@ src/stories/Introduction.stories.mdx
 docker-compose.yml
 .github/**
 storybook-static/**
-
+sveltekit-web3auth/
