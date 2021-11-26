@@ -1,5 +1,9 @@
-<script context="module">
+<script context="module" lang="ts">
   import { graphQLClient } from "$lib/graphQL/urql";
+  // you'd probably use normal $lib/config here, but if I did it'd be part of the package
+  // which wouldn't work...
+  // so I added $config to svelte.config.js as well
+  import { config } from "../../config/index";
 
   const defaults = {
     limit: 10,
@@ -41,7 +45,7 @@
       offset: parseInt(page.query.get("offset"), 10) || defaults.offset,
     };
 
-    let serverGQLClient = graphQLClient(session);
+    let serverGQLClient = graphQLClient(session, config.graphql);
 
     const result = await serverGQLClient.query(QUERY, variables).toPromise();
     const { data } = result;

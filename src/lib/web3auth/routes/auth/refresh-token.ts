@@ -3,9 +3,6 @@ import type { Locals } from "$lib/types";
 import type { RequestHandler } from "@sveltejs/kit";
 import { renewWeb3AuthToken, parseCookie } from "$lib";
 
-/**
- * @type {import('@sveltejs/kit').RequestHandler}
- */
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {

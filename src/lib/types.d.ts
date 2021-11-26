@@ -54,5 +54,11 @@ export interface UserSession {
   auth_server_online: boolean;
 }
 export interface GetUserSessionFn {
-  (request: ServerRequest<Locals>, clientSecret: string): Promise<UserSession>;
+  (
+    request: ServerRequest<Locals>,
+    issuer: string,
+    clientId: string,
+    clientSecret: string,
+    refreshTokenMaxRetries: number
+  ): Promise<UserSession>;
 }

@@ -13,19 +13,17 @@ import {
   populateResponseHeaders,
   populateRequestLocals,
 } from "./hooks-utils";
-import { config } from "./config";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
-
-const { clientId, issuer } = config;
-
-const web3authBaseUrl = issuer;
 
 // This function is recursive - if a user does not have an access token, but a refresh token
 // it attempts to refresh the access token, and calls itself again recursively, this time
 // to go down the path of having the access token
 export const getUserSession: GetUserSessionFn = async (
   request: ServerRequest<Locals>,
-  clientSecret
+  issuer,
+  clientId,
+  clientSecret,
+  refreshTokenMaxRetries
 ) => {
   try {
     if (request.locals?.accessToken) {
@@ -44,7 +42,7 @@ export const getUserSession: GetUserSessionFn = async (
       }
 
       try {
-        const testAuthServerResponse = await fetch(web3authBaseUrl, {
+        const testAuthServerResponse = await fetch(issuer, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -62,7 +60,7 @@ export const getUserSession: GetUserSessionFn = async (
       }
 
       console.log("hooks: getUserSession: /userinfo");
-      const res = await fetch(`${web3authBaseUrl}/userinfo`, {
+      const res = await fetch(`${issuer}/userinfo`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${request.locals.accessToken}`,
@@ -90,14 +88,10 @@ export const getUserSession: GetUserSessionFn = async (
         try {
           const data = await res.json();
 
-          if (
-            data?.error &&
-            request.locals?.retries <
-              import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
-          ) {
+          if (data?.error && request.locals?.retries < refreshTokenMaxRetries) {
             const newTokenData = await renewWeb3AuthToken(
               request.locals.refreshToken,
-              web3authBaseUrl,
+              issuer,
               clientId,
               clientSecret
             );
@@ -112,7 +106,13 @@ export const getUserSession: GetUserSessionFn = async (
             } else {
               request.locals.accessToken = newTokenData.accessToken;
               request.locals.retries = request.locals.retries + 1;
-              return await getUserSession(request, clientSecret);
+              return await getUserSession(
+                request,
+                issuer,
+                clientId,
+                clientSecret,
+                refreshTokenMaxRetries
+              );
             }
           }
 
@@ -130,13 +130,10 @@ export const getUserSession: GetUserSessionFn = async (
       }
     } else {
       try {
-        if (
-          request.locals?.retries <
-          import.meta.env.VITE_WEB3AUTH_TOKEN_REFRESH_MAX_RETRIES
-        ) {
+        if (request.locals?.retries < refreshTokenMaxRetries) {
           const newTokenData = await renewWeb3AuthToken(
             request.locals.refreshToken,
-            web3authBaseUrl,
+            issuer,
             clientId,
             clientSecret
           );
@@ -154,7 +151,7 @@ export const getUserSession: GetUserSessionFn = async (
         }
       } catch (e) {} // eslint-disable-line no-empty
       try {
-        const testAuthServerResponse = await fetch(web3authBaseUrl, {
+        const testAuthServerResponse = await fetch(issuer, {
           headers: {
             "Content-Type": "application/json",
           },
