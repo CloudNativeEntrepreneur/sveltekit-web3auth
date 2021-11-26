@@ -3,8 +3,7 @@ export const VITE_GRAPHQL_URL = import.meta.env.VITE_GRAPHQL_URL;
 export const VITE_GRAPHQL_INTERNAL_URL = import.meta.env
   .VITE_GRAPHQL_INTERNAL_URL;
 
-export const VITE_GRAPHQL_WS_URL = import.meta.env
-  .VITE_GRAPHQL_WS_URL;
+export const VITE_GRAPHQL_WS_URL = import.meta.env.VITE_GRAPHQL_WS_URL;
 
 export const VITE_WEB3AUTH_ISSUER: string = import.meta.env
   .VITE_WEB3AUTH_ISSUER;

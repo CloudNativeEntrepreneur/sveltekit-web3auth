@@ -1,8 +1,7 @@
 <script context="module" lang="ts">
   import { graphQLClient } from "$lib/graphQL/urql";
   // you'd probably use normal $lib/config here, but if I did it'd be part of the package
-  // which wouldn't work...
-  // so I added $config to svelte.config.js as well
+  // which wouldn't work... so plain old relative import gets the job done.
   import { config } from "../../config/index";
 
   const defaults = {
