@@ -116,4 +116,4 @@ dist
 .svelte-kit/
 build/
 storybook-static/
-svelte-web3auth/
+sveltekit-web3auth/
