@@ -32,6 +32,12 @@ https://www.npmjs.com/package/sveltekit-web3auth
 
 # Usage
 
+## Template
+
+The easiest way to get started is with the template: https://github.com/CloudNativeEntrepreneur/sveltekit-web3auth-template
+
+## Installation
+
 <code>
     npm i sveltekit-web3auth --save-dev
 </code>
