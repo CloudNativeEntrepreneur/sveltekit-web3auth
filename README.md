@@ -165,3 +165,17 @@ In production mode it's important to build with a blank `VITE_WEB3AUTH_CLIENT_SE
 ```bash
 npm run build
 ```
+
+# FAQ
+
+## YOUR SECRET IS EXPOSED
+
+Yes, I know.
+
+It'll only work in the local development cluster - this is part of an example that contains several moving parts, so I just generated some random secrets where they were needed and preconfigured things accordingly so you can just run it locally and everything will work. Couldn't go without secrets as part of that example is an authentication server and it's JWT integration with Hasura.
+
+Don't use these proconfigured values in production. I typically use ExternalSecrets in prod.
+
+Additionally, because Sveltekit generates code for the client and server (at least in this example), we need to be careful about how to build and configure prod, and I wanted to provide an example of that too.
+
+I generally deploy things to Kubernetes, which is what the charts folder is for, and in a real chart I'd use ExternalSecrets to provide those values.
