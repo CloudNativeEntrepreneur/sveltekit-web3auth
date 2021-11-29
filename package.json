@@ -9,7 +9,8 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check --plugin-search-dir=. . && eslint .",
-    "format": "prettier --write --plugin-search-dir=. ."
+    "format": "prettier --write --plugin-search-dir=. .",
+    "semantic-release": "semantic-release"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "1.0.0-next.55",
@@ -36,7 +37,8 @@
     "tailwindcss": "2.2.19",
     "typescript": "4.5.2",
     "web3": "1.6.1",
-    "ws": "8.3.0"
+    "ws": "8.3.0",
+    "semantic-release": "^18.0.1"
   },
   "license": "MIT",
   "keywords": [
