@@ -24,4 +24,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: cd sveltekit-web3auth && npm ci && npx semantic-release
+        run: cd sveltekit-web3auth && npm i && npx semantic-release
