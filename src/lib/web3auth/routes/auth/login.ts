@@ -7,14 +7,14 @@ export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {
     const clientId = (request.body as any).clientId;
-    const publicAddress = (request.body as any).publicAddress;
+    const address = (request.body as any).address;
     const signature = (request.body as any).signature;
 
     const auth = await createAuthSession(
       issuer,
       clientId,
       clientSecret,
-      publicAddress,
+      address,
       signature
     );
 
@@ -33,7 +33,7 @@ export const post =
     };
 
     // Cookie is set based on locals value in next step
-    request.locals.userid = user.publicAddress;
+    request.locals.userid = user.address;
     request.locals.user = user;
     request.locals.accessToken = auth.accessToken;
     request.locals.refreshToken = auth.refreshToken;

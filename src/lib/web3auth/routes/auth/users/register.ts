@@ -6,14 +6,9 @@ export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
   async (request) => {
     const clientId = (request.body as any).clientId;
-    const publicAddress = (request.body as any).publicAddress;
+    const address = (request.body as any).address;
 
-    const user = await registerUser(
-      issuer,
-      clientId,
-      clientSecret,
-      publicAddress
-    );
+    const user = await registerUser(issuer, clientId, clientSecret, address);
 
     const response = {
       body: JSON.stringify(user),

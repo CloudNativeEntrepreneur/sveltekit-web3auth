@@ -23,14 +23,14 @@
         order_by: {sentAt: $order},
         offset: $offset,
         where: {
-          publicAddress: {_ilike: $fromFilter}
+          address: {_ilike: $fromFilter}
         }
       ) {
         message
-        publicAddress
+        address
         sentAt
       }
-      messages_aggregate(where: {publicAddress: {_ilike: $fromFilter}}) {
+      messages_aggregate(where: {address: {_ilike: $fromFilter}}) {
         aggregate {
           count
         }
@@ -91,7 +91,7 @@
     <ol>
       {#each messages as message}
         <li>
-          <strong>{message.publicAddress} ({message.sentAt}):</strong>
+          <strong>{message.address} ({message.sentAt}):</strong>
           {message.message}
         </li>
       {/each}
