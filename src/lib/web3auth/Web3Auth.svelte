@@ -103,13 +103,13 @@
         return;
       }
 
-      const publicAddress = coinbase.toLowerCase();
+      const address = coinbase.toLowerCase();
 
       let user;
       let users;
-      const usersWithPublicAddressResponse = await fetch(`/auth/users`, {
+      const usersWithAddressResponse = await fetch(`/auth/users`, {
         body: JSON.stringify({
-          publicAddress,
+          address,
           clientId,
         }),
         headers: {
@@ -118,14 +118,14 @@
         method: "POST",
       });
 
-      if (usersWithPublicAddressResponse.ok) {
-        users = await usersWithPublicAddressResponse.json();
+      if (usersWithAddressResponse.ok) {
+        users = await usersWithAddressResponse.json();
       }
 
       if (users.length) {
         user = users[0];
       } else {
-        user = await handleSignup(clientId)(publicAddress);
+        user = await handleSignup(clientId)(address);
       }
 
       const signedMessage = await handleSignMessage(web3)(user);

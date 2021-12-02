@@ -2,24 +2,18 @@
 
 export const handleAuthenticate =
   (clientId) =>
-  ({
-    publicAddress,
-    signature,
-  }: {
-    publicAddress: string;
-    signature: string;
-  }) =>
+  ({ address, signature }: { address: string; signature: string }) =>
     fetch(`/auth/login`, {
-      body: JSON.stringify({ clientId, publicAddress, signature }),
+      body: JSON.stringify({ clientId, address, signature }),
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
     }).then((response) => response.json());
 
-export const handleSignup = (clientId: string) => (publicAddress: string) =>
+export const handleSignup = (clientId: string) => (address: string) =>
   fetch(`/auth/users/register`, {
-    body: JSON.stringify({ publicAddress, clientId }),
+    body: JSON.stringify({ address, clientId }),
     headers: {
       "Content-Type": "application/json",
     },

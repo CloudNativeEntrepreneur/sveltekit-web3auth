@@ -6,13 +6,13 @@ export async function createAuthSession(
   issuer: string,
   clientId: string,
   clientSecret: string,
-  publicAddress: string,
+  address: string,
   signature: string
 ): Promise<Web3AuthResponse> {
   let auth;
   const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
   const createAuthSessionFetch = await fetch(`${issuer}/api/auth`, {
-    body: JSON.stringify({ publicAddress, signature }),
+    body: JSON.stringify({ address, signature }),
     headers: {
       Authorization,
       "Content-Type": "application/json",
@@ -33,15 +33,15 @@ export async function endAuthSession(options: {
   issuer: string;
   clientId: string;
   clientSecret: string;
-  publicAddress: string;
+  address: string;
 }): Promise<Web3AuthResponse> {
-  const { issuer, clientId, clientSecret, publicAddress } = options;
+  const { issuer, clientId, clientSecret, address } = options;
 
   let auth;
   const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
 
   const logoutRequest = await fetch(`${issuer}/api/auth/logout`, {
-    body: JSON.stringify({ publicAddress }),
+    body: JSON.stringify({ address }),
     headers: {
       Authorization,
       "Content-Type": "application/json",
@@ -62,19 +62,16 @@ export async function getUsers(
   issuer: string,
   clientId: string,
   clientSecret: string,
-  publicAddress: string
+  address: string
 ): Promise<any> {
   const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
 
-  const fetchResult = await fetch(
-    `${issuer}/api/users?publicAddress=${publicAddress}`,
-    {
-      headers: {
-        Authorization,
-      },
-      method: "GET",
-    }
-  );
+  const fetchResult = await fetch(`${issuer}/api/users?address=${address}`, {
+    headers: {
+      Authorization,
+    },
+    method: "GET",
+  });
 
   if (fetchResult.ok) {
     const users = await fetchResult.json();
@@ -86,12 +83,12 @@ export async function registerUser(
   issuer: string,
   clientId: string,
   clientSecret: string,
-  publicAddress: string
+  address: string
 ): Promise<any> {
   const Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
 
   const fetchResult = await fetch(`${issuer}/api/users`, {
-    body: JSON.stringify({ publicAddress }),
+    body: JSON.stringify({ address }),
     headers: {
       Authorization,
       "Content-Type": "application/json",

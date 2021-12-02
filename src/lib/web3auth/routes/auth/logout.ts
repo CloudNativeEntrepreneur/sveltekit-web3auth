@@ -10,13 +10,13 @@ export const post =
     const cookie: any = parseCookie(request.headers.cookie);
     const { userInfo } = cookie;
     const user = JSON.parse(userInfo);
-    const publicAddress = user.userid;
+    const address = user.userid;
 
     const auth = await endAuthSession({
       issuer,
       clientId,
       clientSecret,
-      publicAddress,
+      address,
     });
 
     const response = {
