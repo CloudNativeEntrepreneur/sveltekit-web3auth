@@ -10,6 +10,8 @@ export const handleSignMessage =
 
       return { address, signature };
     } catch (err) {
-      throw new Error(`You need to sign the message to be able to log in. ${err}`);
+      throw new Error(
+        `You need to sign the message to be able to log in. ${err}`
+      );
     }
   };
