@@ -27,7 +27,7 @@
     "jwt-decode": "3.1.2",
     "postcss": "8.4.4",
     "postcss-load-config": "3.1.0",
-    "prettier": "2.5.0",
+    "prettier": "2.5.1",
     "prettier-plugin-svelte": "2.5.0",
     "semantic-release": "18.0.1",
     "subscriptions-transport-ws": "0.11.0",
