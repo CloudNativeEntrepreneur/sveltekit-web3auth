@@ -51,16 +51,19 @@
 
   const defaults = {
     limit: 25,
+    order: "asc",
     offset: 0,
   };
 
   const QUERY = `
     query Todos(
       $limit: Int = ${defaults.limit},
+      $order: order_by = ${defaults.order},
       $offset: Int = ${defaults.offset},
     ) {
       todos(
         limit: $limit,
+        order_by: {createdAt: $order},
         offset: $offset,
       ) {
         id
@@ -81,10 +84,12 @@
   const TODOS_SUBSCRIPTION = `
     subscription Todos(
       $limit: Int = ${defaults.limit},
+      $order: order_by = ${defaults.order},
       $offset: Int = ${defaults.offset},
     ) {
       todos(
         limit: $limit,
+        order_by: {createdAt: $order},
         offset: $offset,
       ) {
         id
@@ -111,7 +116,7 @@
     // const userAddress = session?.user?.address
     const variables = {
       limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
-      // order: page.query.get("order") || "asc",
+      order: page.query.get("order") || "asc",
       offset: parseInt(page.query.get("offset"), 10) || defaults.offset,
     };
 
@@ -151,7 +156,7 @@
   export let todos;
   export let count;
   const limit = createQueryStore("limit");
-  // const order = createQueryStore('order')
+  const order = createQueryStore("order");
   const offset = createQueryStore("offset");
 
   const handleTodosSubscription = (previousTodos = [], data) => {
@@ -167,10 +172,9 @@
   const startSubscriptions = (browserGQLClient) => {
     setClient(browserGQLClient);
 
-    console.log("start subscription", { limit, offset });
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {
       limit: get(limit) || defaults.limit,
-      // order,
+      order,
       offset: get(offset) || defaults.offset,
     });
 
