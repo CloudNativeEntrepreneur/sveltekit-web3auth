@@ -1,6 +1,11 @@
 <script context="module" lang="ts">
   import { graphQLClient } from "$lib/graphQL/urql";
-  import { setClient, operationStore, subscription } from "@urql/svelte";
+  import {
+    setClient,
+    operationStore,
+    subscription,
+    mutation,
+  } from "@urql/svelte";
   // you'd probably use normal $lib/config here, but if I did it'd be part of the package
   // which wouldn't work... so plain old relative import gets the job done.
   import { config } from "../../config/index";
@@ -173,9 +178,28 @@
     startSubscription(browserGQLClient);
   }
 
+  const addTodo = mutation({
+    query: `
+    mutation CommandInitializeTodo($todo: String!) {
+      command_todo_initialize(todo: {todo: $todo}) {
+        address
+        completed
+        createdAt
+        id
+        todo
+        completedAt
+      }
+    }
+  `,
+  });
+
   let newTodo;
-  const addItem = (e) => {
-    console.log(newTodo);
+  const addNewTodo = async (event) => {
+    await addTodo({
+      todo: newTodo
+    })
+    newTodo = ""
+    event.srcElement[0].focus()
   };
 </script>
 
@@ -186,7 +210,7 @@
     <div class="bg-white rounded shadow p-6 m-4 w-full lg:w-3/4">
       <div class="mb-4">
         <h1 class="text-grey-darkest">{$session.user.address}'s Todo List</h1>
-        <form class="flex mt-4" on:submit|preventDefault={addItem}>
+        <form class="flex mt-4" on:submit|preventDefault={addNewTodo}>
           <input
             class="shadow appearance-none border rounded w-full py-2 px-3 mr-4 text-grey-darker"
             name="todo"
