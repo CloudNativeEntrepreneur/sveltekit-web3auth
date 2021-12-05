@@ -16,6 +16,7 @@
   import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
+  import Todo from "../../components/todos/Todo.svelte";
 
   export const queryToObject = (params) => {
     // parse query string
@@ -174,7 +175,7 @@
 
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {
       limit: get(limit) || defaults.limit,
-      order,
+      order: get(order) || defaults.order,
       offset: get(offset) || defaults.offset,
     });
 
@@ -194,10 +195,25 @@
     startSubscriptions(browserGQLClient);
   }
 
-  const addTodo = mutation({
+  const commandTodoInitialize = mutation({
     query: `
     mutation CommandInitializeTodo($todo: String!) {
-      command_todo_initialize(todo: {todo: $todo}) {
+      command_todo_initialize(todo: $todo) {
+        address
+        completed
+        createdAt
+        id
+        todo
+        completedAt
+      }
+    }
+  `,
+  });
+
+  const commandTodoComplete = mutation({
+    query: `
+    mutation CommandCompleteTodo($id: String!) {
+      command_todo_complete(id: $id) {
         address
         completed
         createdAt
@@ -210,8 +226,8 @@
   });
 
   let newTodo;
-  const addNewTodo = async (event) => {
-    await addTodo({
+  const addTodo = async (event) => {
+    await commandTodoInitialize({
       todo: newTodo,
     });
     newTodo = "";
@@ -226,7 +242,7 @@
     <div class="bg-white rounded shadow p-6 m-4 w-full lg:w-3/4">
       <div class="mb-4">
         <h1 class="text-grey-darkest">{$session.user.address}'s Todo List</h1>
-        <form class="flex mt-4" on:submit|preventDefault={addNewTodo}>
+        <form class="flex mt-4" on:submit|preventDefault={addTodo}>
           <input
             class="shadow appearance-none border rounded w-full py-2 px-3 mr-4 text-grey-darker"
             name="todo"
@@ -245,26 +261,7 @@
         {:else}
           <ol>
             {#each todos as todo}
-              <div class="flex mb-4 items-center">
-                <p class="w-full text-grey-darkest">
-                  {todo.todo}
-                </p>
-                {#if todo.done}
-                  <button
-                    class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-grey border-grey hover:bg-grey"
-                    >Reopen</button
-                  >
-                {:else}
-                  <button
-                    class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-green border-green hover:bg-green"
-                    >Complete</button
-                  >
-                {/if}
-                <button
-                  class="flex-no-shrink p-2 ml-2 border-2 rounded text-red border-red hover:text-white hover:bg-red"
-                  >Remove</button
-                >
-              </div>
+              <Todo {todo} {commandTodoComplete} />
             {/each}
           </ol>
           <p>{count} Total</p>
