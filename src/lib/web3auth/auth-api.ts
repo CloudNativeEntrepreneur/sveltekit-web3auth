@@ -108,6 +108,7 @@ export async function renewWeb3AuthToken(
   clientId: string,
   clientSecret: string
 ): Promise<Web3AuthResponse> {
+  // console.log("renewing tokens");
   if (!refreshToken) {
     const error_data: Web3AuthResponse = {
       error: "invalid_grant",

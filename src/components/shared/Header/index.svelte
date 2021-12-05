@@ -18,11 +18,11 @@
         href="/profile">Profile</a
       >
     </li>
-    <li class:nav-active={$page.path === "/graphql"} class="nav-link md:h-full">
+    <li class:nav-active={$page.path === "/todos"} class="nav-link md:h-full">
       <a
         class="text-center font-semibold text-gray-100"
         sveltekit:prefetch
-        href="/graphql">GraphQL</a
+        href="/todos">Todos</a
       >
     </li>
   </ul>
