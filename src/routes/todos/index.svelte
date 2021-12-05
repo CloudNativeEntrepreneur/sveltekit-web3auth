@@ -97,6 +97,16 @@
     }
   `;
 
+  const TODOS_COUNT_SUBSCRIPTION = `
+    subscription Todos {
+      todos_aggregate {
+        aggregate {
+          count
+        }
+      }
+    }
+  `;
+
   export async function load({ page, session, fetch }) {
     // const userAddress = session?.user?.address
     const variables = {
@@ -144,19 +154,17 @@
   // const order = createQueryStore('order')
   const offset = createQueryStore("offset");
 
-  const handleSubscription = (previousTodos = [], data) => {
-    console.log("new todos", {
-      previousTodos,
-      todos,
-      data,
-      limit,
-      // order,
-      offset,
-    });
+  const handleTodosSubscription = (previousTodos = [], data) => {
     todos = data.todos;
     return [...data.todos];
   };
-  const startSubscription = (browserGQLClient) => {
+
+  const handleTodosCountSubscription = (previousCount, data) => {
+    count = data.todos_aggregate.aggregate.count;
+    return count;
+  };
+
+  const startSubscriptions = (browserGQLClient) => {
     setClient(browserGQLClient);
 
     console.log("start subscription", { limit, offset });
@@ -165,7 +173,11 @@
       // order,
       offset: get(offset) || defaults.offset,
     });
-    subscription(todosSubscription, handleSubscription);
+
+    const todosCountSubscription = operationStore(TODOS_COUNT_SUBSCRIPTION);
+
+    subscription(todosSubscription, handleTodosSubscription);
+    subscription(todosCountSubscription, handleTodosCountSubscription);
   };
   if (browser) {
     const browserGQLClient = graphQLClient(
@@ -175,7 +187,7 @@
       ws,
       stws
     );
-    startSubscription(browserGQLClient);
+    startSubscriptions(browserGQLClient);
   }
 
   const addTodo = mutation({
@@ -196,10 +208,10 @@
   let newTodo;
   const addNewTodo = async (event) => {
     await addTodo({
-      todo: newTodo
-    })
-    newTodo = ""
-    event.srcElement[0].focus()
+      todo: newTodo,
+    });
+    newTodo = "";
+    event.srcElement[0].focus();
   };
 </script>
 
@@ -236,12 +248,12 @@
                 {#if todo.done}
                   <button
                     class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-grey border-grey hover:bg-grey"
-                    >Not&nbsp;Done</button
+                    >Reopen</button
                   >
                 {:else}
                   <button
                     class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-green border-green hover:bg-green"
-                    >Done</button
+                    >Complete</button
                   >
                 {/if}
                 <button
@@ -253,32 +265,6 @@
           </ol>
           <p>{count} Total</p>
         {/if}
-        <!-- <div class="flex mb-4 items-center">
-        <p class="w-full text-grey-darkest">
-          Add another component to Tailwind Components
-        </p>
-        <button
-          class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-green border-green hover:bg-green"
-          >Done</button
-        >
-        <button
-          class="flex-no-shrink p-2 ml-2 border-2 rounded text-red border-red hover:text-white hover:bg-red"
-          >Remove</button
-        >
-      </div>
-      <div class="flex mb-4 items-center">
-        <p class="w-full line-through text-green">
-          Submit Todo App Component to Tailwind Components
-        </p>
-        <button
-          class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-grey border-grey hover:bg-grey"
-          >Not&nbsp;Done</button
-        >
-        <button
-          class="flex-no-shrink p-2 ml-2 border-2 rounded text-red border-red hover:text-white hover:bg-red"
-          >Remove</button
-        >
-      </div> -->
       </div>
     </div>
   </div>
