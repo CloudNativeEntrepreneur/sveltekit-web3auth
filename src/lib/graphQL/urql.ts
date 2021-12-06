@@ -31,7 +31,7 @@ export const graphQLClient = (
     const sessionAccessToken = session.accessToken;
     const eitherAccessToken = currentAccessToken || sessionAccessToken;
 
-    let authHeaders: any = {};
+    const authHeaders: any = {};
 
     if (eitherAccessToken) {
       authHeaders.authorization = `Bearer ${eitherAccessToken}`;
@@ -83,7 +83,7 @@ export const graphQLClient = (
               ? operation.context.fetchOptions()
               : operation.context.fetchOptions || {};
 
-          let authHeaders: any = {};
+          const authHeaders: any = {};
 
           if (authState.accessToken) {
             authHeaders.authorization = `Bearer ${authState.accessToken}`;
