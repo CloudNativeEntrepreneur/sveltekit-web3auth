@@ -42,8 +42,10 @@
     "ws": "8.3.0"
   },
   "peerDependencies": {
+    "@urql/devtools": "2.x",
     "@urql/svelte": "1.x",
-    "@urql/exchange-auth": "0.x"
+    "@urql/exchange-auth": "0.x",
+    "jwt-decode": "3.x"
   },
   "license": "MIT",
   "keywords": [
