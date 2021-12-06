@@ -225,6 +225,21 @@
   `,
   });
 
+  const commandTodoReopen = mutation({
+    query: `
+    mutation CommandTodoReopen($id: String!) {
+      command_todo_reopen(id: $id) {
+        address
+        completed
+        createdAt
+        id
+        todo
+        completedAt
+      }
+    }
+  `,
+  });
+
   let newTodo;
   const addTodo = async (event) => {
     await commandTodoInitialize({
@@ -261,7 +276,7 @@
         {:else}
           <ol>
             {#each todos as todo}
-              <Todo {todo} {commandTodoComplete} />
+              <Todo {todo} {commandTodoComplete} {commandTodoReopen} />
             {/each}
           </ol>
           <p>{count} Total</p>

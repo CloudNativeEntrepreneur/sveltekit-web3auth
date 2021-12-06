@@ -1,9 +1,16 @@
 <script>
   export let todo;
   export let commandTodoComplete;
+  export let commandTodoReopen;
 
   const completeTodo = async (event) => {
     await commandTodoComplete({
+      id: todo.id,
+    });
+  };
+
+  const reopenTodo = async (event) => {
+    await commandTodoReopen({
       id: todo.id,
     });
   };
@@ -16,7 +23,7 @@
   {#if todo.completed}
     <button
       class="flex-no-shrink p-2 ml-4 mr-2 border-2 rounded hover:text-white text-grey border-grey hover:bg-grey"
-      >Reopen</button
+      on:click={reopenTodo}>Reopen</button
     >
   {:else}
     <button
