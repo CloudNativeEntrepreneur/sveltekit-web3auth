@@ -2,6 +2,7 @@
   export let todo;
   export let commandTodoComplete;
   export let commandTodoReopen;
+  export let commandTodoRemove;
 
   const completeTodo = async (event) => {
     await commandTodoComplete({
@@ -11,6 +12,12 @@
 
   const reopenTodo = async (event) => {
     await commandTodoReopen({
+      id: todo.id,
+    });
+  };
+  
+  const removeTodo = async (event) => {
+    await commandTodoRemove({
       id: todo.id,
     });
   };
@@ -33,6 +40,7 @@
   {/if}
   <button
     class="flex-no-shrink p-2 ml-2 border-2 rounded text-red border-red hover:text-white hover:bg-red"
+    on:click={removeTodo}
     >Remove</button
   >
 </div>
