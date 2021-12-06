@@ -239,6 +239,16 @@
     }
   `,
   });
+  
+  const commandTodoRemove = mutation({
+    query: `
+    mutation CommandTodoRemove($id: String!) {
+      command_todo_remove(id: $id) {
+        id
+      }
+    }
+  `,
+  });
 
   let newTodo;
   const addTodo = async (event) => {
@@ -276,7 +286,7 @@
         {:else}
           <ol>
             {#each todos as todo}
-              <Todo {todo} {commandTodoComplete} {commandTodoReopen} />
+              <Todo {todo} {commandTodoComplete} {commandTodoReopen} {commandTodoRemove} />
             {/each}
           </ol>
           <p>{count} Total</p>
