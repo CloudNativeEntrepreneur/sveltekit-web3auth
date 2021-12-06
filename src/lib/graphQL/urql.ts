@@ -31,9 +31,15 @@ export const graphQLClient = (
     const sessionAccessToken = session.accessToken;
     const eitherAccessToken = currentAccessToken || sessionAccessToken;
 
+    let authHeaders: any = {};
+
+    if (eitherAccessToken) {
+      authHeaders.authorization = `Bearer ${eitherAccessToken}`;
+    }
+
     return {
       headers: {
-        authorization: eitherAccessToken ? `Bearer ${eitherAccessToken}` : "",
+        ...authHeaders,
       },
     };
   };
@@ -112,13 +118,15 @@ export const graphQLClient = (
           };
         },
         willAuthError: ({ authState }) => {
-          console.log("will auth error", authState);
+          // TODO: do better stuff here
+          // console.log("will auth error", authState);
           if (!authState) return true;
           // e.g. check for expiration, existence of auth etc
           return false;
         },
         didAuthError: ({ error }) => {
-          console.log("did auth error", error);
+          // TODO: do better stuff here
+          // console.log("did auth error", error);
           // check if the error was an auth error (this can be implemented in various ways, e.g. 401 or a special error code)
           return error.graphQLErrors.some(
             (e) => e.extensions?.code === "FORBIDDEN"
