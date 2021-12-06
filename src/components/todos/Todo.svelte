@@ -1,23 +1,21 @@
 <script>
   export let todo;
-  export let commandTodoComplete;
-  export let commandTodoReopen;
-  export let commandTodoRemove;
+  export let optimisticCommandTodoComplete;
+  export let optimisticCommandTodoReopen;
+  export let optimisticCommandTodoRemove;
 
   const completeTodo = async (event) => {
-    await commandTodoComplete({
-      id: todo.id,
-    });
+    await optimisticCommandTodoComplete(todo);
   };
 
   const reopenTodo = async (event) => {
-    await commandTodoReopen({
+    await optimisticCommandTodoReopen({
       id: todo.id,
     });
   };
-  
+
   const removeTodo = async (event) => {
-    await commandTodoRemove({
+    await optimisticCommandTodoRemove({
       id: todo.id,
     });
   };
@@ -40,7 +38,6 @@
   {/if}
   <button
     class="flex-no-shrink p-2 ml-2 border-2 rounded text-red border-red hover:text-white hover:bg-red"
-    on:click={removeTodo}
-    >Remove</button
+    on:click={removeTodo}>Remove</button
   >
 </div>

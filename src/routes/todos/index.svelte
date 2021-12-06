@@ -209,6 +209,22 @@
     }
   `,
   });
+  let newTodo;
+  const optimisticCommandTodoInitialize = async (event) => {
+    let optimisticTodos = [...todos];
+    optimisticTodos.push({
+      todo: newTodo,
+      createdAt: new Date(),
+      completed: false,
+    });
+    todos = optimisticTodos;
+    count++;
+    await commandTodoInitialize({
+      todo: newTodo,
+    });
+    newTodo = "";
+    event.srcElement[0].focus();
+  };
 
   const commandTodoComplete = mutation({
     query: `
@@ -225,6 +241,16 @@
   `,
   });
 
+  const optimisticCommandTodoComplete = (todo) => {
+    let optimisticTodos = [...todos];
+    let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
+    optimisticTodo.completed = true;
+    todos = optimisticTodos;
+    return commandTodoComplete({
+      id: todo.id,
+    });
+  };
+
   const commandTodoReopen = mutation({
     query: `
     mutation CommandTodoReopen($id: String!) {
@@ -239,7 +265,16 @@
     }
   `,
   });
-  
+  const optimisticCommandTodoReopen = (todo) => {
+    let optimisticTodos = [...todos];
+    let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
+    optimisticTodo.completed = false;
+    todos = optimisticTodos;
+    return commandTodoReopen({
+      id: todo.id,
+    });
+  };
+
   const commandTodoRemove = mutation({
     query: `
     mutation CommandTodoRemove($id: String!) {
@@ -249,14 +284,14 @@
     }
   `,
   });
-
-  let newTodo;
-  const addTodo = async (event) => {
-    await commandTodoInitialize({
-      todo: newTodo,
+  const optimisticCommandTodoRemove = (todo) => {
+    let optimisticTodos = [...todos];
+    optimisticTodos.splice(optimisticTodos.findIndex((t) => t.id === todo.id));
+    todos = optimisticTodos;
+    count--;
+    return commandTodoRemove({
+      id: todo.id,
     });
-    newTodo = "";
-    event.srcElement[0].focus();
   };
 </script>
 
@@ -267,7 +302,10 @@
     <div class="bg-white rounded shadow p-6 m-4 w-full lg:w-3/4">
       <div class="mb-4">
         <h1 class="text-grey-darkest">{$session.user.address}'s Todo List</h1>
-        <form class="flex mt-4" on:submit|preventDefault={addTodo}>
+        <form
+          class="flex mt-4"
+          on:submit|preventDefault={optimisticCommandTodoInitialize}
+        >
           <input
             class="shadow appearance-none border rounded w-full py-2 px-3 mr-4 text-grey-darker"
             name="todo"
@@ -286,7 +324,12 @@
         {:else}
           <ol>
             {#each todos as todo}
-              <Todo {todo} {commandTodoComplete} {commandTodoReopen} {commandTodoRemove} />
+              <Todo
+                {todo}
+                {optimisticCommandTodoComplete}
+                {optimisticCommandTodoReopen}
+                {optimisticCommandTodoRemove}
+              />
             {/each}
           </ol>
           <p>{count} Total</p>
