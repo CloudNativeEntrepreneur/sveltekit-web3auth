@@ -73,12 +73,12 @@
       </div>
       <LogoutButton class="btn btn-primary">Logout</LogoutButton>
       <RefreshTokenButton class="btn btn-primary"
-        >Refresh Token</RefreshTokenButton
+        >Refresh Tokens</RefreshTokenButton
       >
     </section>
   {:else if $authError}
     <section class="p-5 rounded-lg bg-red-400">
-      {$authError?.error_description}
+      {$authError?.errorDescription}
     </section>
   {:else if $isLoading}
     <section

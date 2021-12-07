@@ -3,7 +3,7 @@ import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
 export type AuthError = {
   error: string;
-  error_description: string;
+  errorDescription: string;
 };
 export interface Locals {
   userid: string;
@@ -51,7 +51,7 @@ export interface UserSession {
   refreshToken: string;
   userid: string;
   error?: AuthError | undefined;
-  auth_server_online: boolean;
+  authServerOnline: boolean;
 }
 export interface GetUserSessionFn {
   (

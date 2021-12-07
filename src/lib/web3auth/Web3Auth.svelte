@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import { setContext } from "svelte";
   import { onMount, onDestroy } from "svelte";
-  import { writable } from "svelte/store";
+  import { writable, get } from "svelte/store";
   import { browser } from "$app/env";
   import { page, session } from "$app/stores";
   import type {
@@ -75,7 +75,7 @@
     localStorage.setItem("user_login", JSON.stringify(user));
   };
 
-  async function metaMaskLogin({ clientId }) {
+  const metaMaskLogin = async ({ clientId }) => {
     try {
       if (!(window as any).ethereum) {
         window.alert("Please install MetaMask first.");
@@ -135,74 +135,110 @@
     } catch (err) {
       window.alert(err);
     }
-  }
+  };
+
+  const checkAuthServerIsOnline = async (issuer) => {
+    const testAuthServerResponse = await fetch(issuer, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (testAuthServerResponse.ok) {
+      session.set({
+        ...session,
+        authServerOnline: true,
+      });
+    } else {
+      throw {
+        error: await testAuthServerResponse.json(),
+      };
+    }
+  };
+
+  const handleAuthServerOffline = (error) => {
+    const errorType = "auth_server_conn_error";
+    const errorDescription = `Auth Server Connection Error: ${error.toString()}`;
+    console.error(errorDescription);
+    AuthStore.isLoading.set(false);
+    AuthStore.authError.set({
+      error: errorType,
+      errorDescription,
+    });
+    session.set({
+      ...session,
+      authServerOnline: false,
+    });
+  };
+
+  const setAuthStoreInfoFromSession = (currentSession) => {
+    AuthStore.isAuthenticated.set(true);
+    AuthStore.accessToken.set(currentSession.accessToken);
+    AuthStore.refreshToken.set(currentSession.refreshToken);
+    AuthStore.idToken.set(currentSession.idToken);
+    AuthStore.authError.set(null);
+  };
+
+  const clearAuthStoreInfo = () => {
+    // console.log("clearing auth store", {
+    //   isAuthenticated: get(isAuthenticated),
+    //   accessToken: get(accessToken),
+    //   refreshToken: get(refreshToken),
+    //   idToken: get(idToken),
+    //   userInfo: get(userInfo),
+    // });
+    AuthStore.isAuthenticated.set(false);
+    AuthStore.accessToken.set(null);
+    AuthStore.refreshToken.set(null);
+    AuthStore.idToken.set(null);
+    AuthStore.userInfo.set(null);
+  };
 
   export async function login(web3authPromise: Web3AuthContextClientPromise) {
+    const web3authContextClientFn = await web3authPromise;
+    const { session, issuer, page, clientId } = web3authContextClientFn();
+
     try {
-      const web3authContextClientFn = await web3authPromise;
-      const { session, issuer, page, clientId } = web3authContextClientFn();
-
-      if (session?.auth_server_online === false) {
-        const testAuthServerResponse = await fetch(issuer, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!testAuthServerResponse.ok) {
-          throw {
-            error: await testAuthServerResponse.json(),
-          };
-        }
-      } else {
-        AuthStore.isLoading.set(true);
-
-        const relogin_initiate_error_list = [
-          "missing_jwt",
-          "invalid_grant",
-          "invalid_token",
-          "token_refresh_error",
-        ];
-        console.log(
-          "relogin_initiate - session?.error?.error",
-          session?.error?.error
-        );
-        const relogin_initiate = session?.error?.error
-          ? relogin_initiate_error_list.includes(session.error.error)
-          : false;
-
-        if (!session?.user && (!session?.error || relogin_initiate)) {
-          AuthStore.isAuthenticated.set(false);
-          AuthStore.accessToken.set(null);
-          AuthStore.refreshToken.set(null);
-
-          await metaMaskLogin({ clientId });
-        } else if (session?.error) {
-          AuthStore.isAuthenticated.set(false);
-          AuthStore.accessToken.set(null);
-          AuthStore.refreshToken.set(null);
-          AuthStore.authError.set(session.error);
-          AuthStore.isLoading.set(false);
-        } else {
-          AuthStore.isLoading.set(false);
-          AuthStore.isAuthenticated.set(true);
-          AuthStore.accessToken.set(session.accessToken);
-          AuthStore.refreshToken.set(session.refreshToken);
-          AuthStore.authError.set(null);
-          if (window.location.toString().includes("code=")) {
-            window.location.assign(page.path);
-          }
-        }
+      // check server is online if it was marked as offline in the session
+      // such as if the server side couldn't reach the auth server
+      if (session?.authServerOnline === false) {
+        await checkAuthServerIsOnline(issuer);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      return handleAuthServerOffline(error);
+    }
+
+    AuthStore.isLoading.set(true);
+
+    const errorsToReinitiateLogin = [
+      "missing_jwt",
+      "invalid_grant",
+      "invalid_token",
+      "token_refresh_error",
+    ];
+
+    const hasErrorThatShouldResultInLoggingInAgain = session?.error?.error
+      ? errorsToReinitiateLogin.includes(session.error.error)
+      : false;
+
+    if (
+      !session?.user &&
+      (!session?.error || hasErrorThatShouldResultInLoggingInAgain)
+    ) {
+      console.log(
+        "Session user is not set. There are either no errors, or the errors indicate logging in is required as they were present in the `errorsToReinitiateLogin` list"
+      );
+
+      clearAuthStoreInfo();
+
+      await metaMaskLogin({ clientId });
+    } else if (session?.error) {
+      console.log("There is an error in the session", session?.error);
+
+      AuthStore.authError.set(session.error);
       AuthStore.isLoading.set(false);
-      AuthStore.isAuthenticated.set(false);
-      AuthStore.accessToken.set(null);
-      AuthStore.refreshToken.set(null);
-      AuthStore.authError.set({
-        error: "auth_server_conn_error",
-        error_description: "Auth Server Connection Error",
-      });
+    } else {
+      AuthStore.isLoading.set(false);
+      setAuthStoreInfoFromSession(session);
     }
   }
 
@@ -215,10 +251,9 @@
 
     // trigger logout in other tabs
     window.localStorage.removeItem("user_login");
-    AuthStore.accessToken.set(null);
-    AuthStore.refreshToken.set(null);
-    AuthStore.isAuthenticated.set(false);
+
     AuthStore.isLoading.set(false);
+    clearAuthStoreInfo();
     session.set({
       authServerOnline: true,
     });
@@ -271,24 +306,19 @@
         if (resData.error) {
           throw {
             error: "token_refresh_error",
-            error_description: "Unable to Refresh token",
+            errorDescription: `Unable to Refresh token: ${resData.error}`,
           };
         }
 
-        const { accessToken, refreshToken } = resData;
-
-        AuthStore.accessToken.set(accessToken);
-        AuthStore.refreshToken.set(refreshToken);
-
-        return { accessToken, refreshToken };
+        onReceivedNewTokens(resData);
+        return resData;
       }
     } catch (e) {
-      AuthStore.accessToken.set(null);
-      AuthStore.refreshToken.set(null);
-      AuthStore.isAuthenticated.set(false);
+      console.error("Error while doing tokenRefresh", e);
+      clearAuthStoreInfo();
       AuthStore.authError.set({
         error: e?.error,
-        error_description: e?.error_description,
+        errorDescription: e?.errorDescription,
       });
     }
   };
@@ -301,12 +331,14 @@
   export let postLogoutRedirectURI: string;
 
   const web3authContextClientFn: Web3AuthContextClientFn = () => {
-    return {
+    const state = {
       session: $session,
       issuer,
       page: $page,
       clientId,
     };
+
+    return state;
   };
 
   const web3authContextClientPromise: Web3AuthContextClientPromise =
@@ -315,40 +347,64 @@
   setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3authContextClientPromise);
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
-  let tokenTimeoutObj = null;
+  const scheduleNextSilentRefresh = (
+    currentSilentRefreshTimeout,
+    accessToken,
+    refreshToken
+  ) => {
+    const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
+    const tokenSkew = 10; // 10 seconds before actual token expiry
+    const skewedTimeoutDuration =
+      jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
+    const timeoutDuration =
+      skewedTimeoutDuration > 0
+        ? skewedTimeoutDuration
+        : skewedTimeoutDuration + tokenSkew * 1000;
+
+    if (currentSilentRefreshTimeout) {
+      // console.log('clearing silent refresh timeout', currentSilentRefreshTimeout)
+      clearTimeout(currentSilentRefreshTimeout);
+    }
+
+    if (timeoutDuration > 0) {
+      currentSilentRefreshTimeout = setTimeout(async () => {
+        await silentRefresh(refreshToken);
+      }, timeoutDuration);
+      // console.log(
+      //   `scheduled another silent refresh in ${
+      //     timeoutDuration / 1000
+      //   } seconds.`,
+      //   currentSilentRefreshTimeout
+      // );
+    } else {
+      console.error(
+        "The session is not active - not scheduling silent refresh"
+      );
+      throw {
+        error: "invalid_grant",
+        errorDescription: "Session is not active",
+      };
+    }
+  };
+
+  let currentSilentRefreshTimeout = null;
   async function silentRefresh(refreshTokenToExchange: string) {
     try {
+      // console.log("Doing silent refresh", refreshTokenToExchange);
       const { accessToken, refreshToken } = await tokenRefresh(
         web3authContextClientPromise,
         refreshTokenToExchange
       );
 
-      const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
-      const tokenSkew = 10; // 10 seconds before actual token expiry
-      const skewedTimeoutDuration =
-        jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
-      const timeoutDuration =
-        skewedTimeoutDuration > 0
-          ? skewedTimeoutDuration
-          : skewedTimeoutDuration + tokenSkew * 1000;
-
-      if (tokenTimeoutObj) {
-        clearTimeout(tokenTimeoutObj);
-      }
-
-      if (timeoutDuration > 0) {
-        tokenTimeoutObj = setTimeout(async () => {
-          await silentRefresh(refreshToken);
-        }, timeoutDuration);
-      } else {
-        throw {
-          error: "invalid_grant",
-          error_description: "Session is not active",
-        };
-      }
+      scheduleNextSilentRefresh(
+        currentSilentRefreshTimeout,
+        accessToken,
+        refreshToken
+      );
     } catch (e) {
-      if (tokenTimeoutObj) {
-        clearTimeout(tokenTimeoutObj);
+      console.error("Silent Refresh Error:", e);
+      if (currentSilentRefreshTimeout) {
+        clearTimeout(currentSilentRefreshTimeout);
       }
     }
   }
@@ -359,13 +415,8 @@
         try {
           if (JSON.parse(window.localStorage.getItem("user_logout"))) {
             window.localStorage.removeItem("user_login");
-
             AuthStore.isLoading.set(false);
-            AuthStore.accessToken.set(null);
-            AuthStore.refreshToken.set(null);
-            AuthStore.idToken.set(null);
-            AuthStore.userInfo.set(null);
-            AuthStore.isAuthenticated.set(false);
+            clearAuthStoreInfo();
           }
         } catch (err) {
           console.error("Sync logout error", err);
@@ -411,74 +462,49 @@
     }
 
     try {
-      if ($session?.auth_server_online === false) {
-        const testAuthServerResponse = await fetch(issuer, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!testAuthServerResponse.ok) {
-          throw {
-            error: await testAuthServerResponse.json(),
-          };
-        }
-      } else {
-        AuthStore.isLoading.set(false);
-        if (!$session.user) {
-          AuthStore.isAuthenticated.set(false);
-          AuthStore.accessToken.set(null);
-          AuthStore.refreshToken.set(null);
-        } else {
-          AuthStore.isAuthenticated.set(true);
-          AuthStore.accessToken.set($session.accessToken);
-          AuthStore.refreshToken.set($session.refreshToken);
-          const jwtData = JSON.parse(
-            atob($session.accessToken.split(".")[1]).toString()
-          );
-          const tokenSkew = 10; // 10 seconds before actual token expiry
-          const skewedTimeoutDuration =
-            jwtData.exp * 1000 - tokenSkew * 1000 - new Date().getTime();
-          const timeoutDuration =
-            skewedTimeoutDuration > 0
-              ? skewedTimeoutDuration
-              : skewedTimeoutDuration + tokenSkew * 1000;
-
-          tokenTimeoutObj = setTimeout(async () => {
-            await silentRefresh($session.refreshToken);
-          }, timeoutDuration);
-
-          AuthStore.authError.set(null);
-
-          try {
-            window.localStorage.setItem(
-              "user_login",
-              JSON.stringify($session.user)
-            );
-          } catch (e) {
-            console.error("Error setting local storage 'user_login'");
-          }
-        }
+      if ($session?.authServerOnline === false) {
+        await checkAuthServerIsOnline(issuer);
       }
-    } catch (e) {
-      console.error("Web3Auth:handleMount - error", e);
-      AuthStore.isLoading.set(false);
-      AuthStore.isAuthenticated.set(false);
-      AuthStore.accessToken.set(null);
-      AuthStore.refreshToken.set(null);
-      AuthStore.authError.set({
-        error: "auth_server_conn_error",
-        error_description: "Auth Server Connection Error",
-      });
+    } catch (error) {
+      return handleAuthServerOffline(error);
+    }
+
+    AuthStore.isLoading.set(false);
+    if (!$session.user) {
+      console.log("mounted without user in session", { session: $session });
+      clearAuthStoreInfo();
+    } else {
+      console.log("mounted with user in session", { session: $session });
+      setAuthStoreInfoFromSession($session);
+
+      const accessToken = $session.accessToken;
+      const refreshToken = $session.accessToken;
+      scheduleNextSilentRefresh(
+        currentSilentRefreshTimeout,
+        accessToken,
+        refreshToken
+      );
+      AuthStore.authError.set(null);
+
+      try {
+        window.localStorage.setItem(
+          "user_login",
+          JSON.stringify($session.user)
+        );
+      } catch (e) {
+        console.error("Error setting local storage 'user_login'");
+      }
     }
   }
+
   onMount(handleMount);
 
   // TODO: this breaks when packaged
   // -----
   // onDestroy(() => {
   //   if (browser) {
-  //     if (tokenTimeoutObj) {
-  //       clearTimeout(tokenTimeoutObj);
+  //     if (currentSilentRefreshTimeout) {
+  //       clearTimeout(currentSilentRefreshTimeout);
   //     }
   //     try {
   //       window.removeEventListener("storage", syncLogout);

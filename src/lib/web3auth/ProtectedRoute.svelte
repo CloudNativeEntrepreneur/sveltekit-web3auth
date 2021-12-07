@@ -15,18 +15,25 @@
       const web3authPromise: Web3AuthContextClientPromise = getContext(
         WEB3AUTH_CONTEXT_CLIENT_PROMISE
       );
+      let doLogin = false;
       // const web3authParamsFn = await web3authPromise;
       // const web3AuthParams = web3authParamsFn($page.path, $page.params);
       if (!$session?.user || !$session?.accessToken) {
-        try {
-          await login(web3authPromise);
-        } catch (e) {
-          console.error(e);
-        }
+        doLogin = true;
       } else {
         const expired = isTokenExpired($session.accessToken);
         if (expired) {
+          doLogin = true;
+        }
+      }
+
+      if (doLogin) {
+        try {
           await login(web3authPromise);
+        } catch (e) {
+          console.error(
+            `Error while attempting to load user for ProtectedRoute: ${e}`
+          );
         }
       }
     }
