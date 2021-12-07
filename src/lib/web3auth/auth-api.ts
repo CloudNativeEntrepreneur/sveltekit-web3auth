@@ -112,7 +112,7 @@ export async function renewWeb3AuthToken(
   if (!refreshToken) {
     const error_data: Web3AuthResponse = {
       error: "invalid_grant",
-      error_description: "Invalid tokens",
+      errorDescription: "Invalid tokens",
       accessToken: null,
       refreshToken: null,
       idToken: null,

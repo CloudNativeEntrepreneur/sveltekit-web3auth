@@ -37,7 +37,7 @@ export const getUserSession: GetUserSessionFn = async (
           accessToken: request.locals.accessToken,
           refreshToken: request.locals.refreshToken,
           userid: request.locals.user.sub,
-          auth_server_online: true,
+          authServerOnline: true,
         };
       }
 
@@ -55,7 +55,7 @@ export const getUserSession: GetUserSessionFn = async (
       } catch (e) {
         throw {
           error: "auth_server_conn_error",
-          error_description: "Auth Server Connection Error",
+          errorDescription: "Auth Server Connection Error",
         };
       }
 
@@ -82,7 +82,7 @@ export const getUserSession: GetUserSessionFn = async (
           accessToken: request.locals.accessToken,
           refreshToken: request.locals.refreshToken,
           userid: data.sub,
-          auth_server_online: true,
+          authServerOnline: true,
         };
       } else {
         try {
@@ -99,8 +99,8 @@ export const getUserSession: GetUserSessionFn = async (
             if (newTokenData?.error) {
               throw {
                 error: data?.error ? data.error : "user_info error",
-                error_description: data?.error_description
-                  ? data.error_description
+                errorDescription: data?.errorDescription
+                  ? data.errorDescription
                   : "Unable to retrieve user Info",
               };
             } else {
@@ -118,8 +118,8 @@ export const getUserSession: GetUserSessionFn = async (
 
           throw {
             error: data?.error ? data.error : "user_info error",
-            error_description: data?.error_description
-              ? data.error_description
+            errorDescription: data?.errorDescription
+              ? data.errorDescription
               : "Unable to retrieve user Info",
           };
         } catch (e) {
@@ -141,7 +141,7 @@ export const getUserSession: GetUserSessionFn = async (
           if (newTokenData?.error) {
             throw {
               error: newTokenData.error,
-              error_description: newTokenData.error_description,
+              errorDescription: newTokenData.errorDescription,
             };
           } else {
             request.locals.accessToken = newTokenData.accessToken;
@@ -164,12 +164,12 @@ export const getUserSession: GetUserSessionFn = async (
       } catch (e) {
         throw {
           error: "auth_server_conn_error",
-          error_description: "Auth Server Connection Error",
+          errorDescription: "Auth Server Connection Error",
         };
       }
       throw {
         error: "missing_jwt",
-        error_description: "access token not found or is null",
+        errorDescription: "access token not found or is null",
       };
     }
   } catch (err) {
@@ -180,8 +180,8 @@ export const getUserSession: GetUserSessionFn = async (
     if (err?.error) {
       request.locals.authError.error = err.error;
     }
-    if (err?.error_description) {
-      request.locals.authError.error_description = err.error_description;
+    if (err?.errorDescription) {
+      request.locals.authError.errorDescription = err.errorDescription;
     }
     return {
       user: null,
@@ -189,7 +189,7 @@ export const getUserSession: GetUserSessionFn = async (
       refreshToken: null,
       userid: null,
       error: request.locals.authError?.error ? request.locals.authError : null,
-      auth_server_online: err.error !== "auth_server_conn_error" ? true : false,
+      authServerOnline: err.error !== "auth_server_conn_error" ? true : false,
     };
   }
 };
@@ -208,7 +208,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   request.locals.retries = 0;
   request.locals.authError = {
     error: null,
-    error_description: null,
+    errorDescription: null,
   };
 
   populateRequestLocals(request, "userid", userInfo, "");
