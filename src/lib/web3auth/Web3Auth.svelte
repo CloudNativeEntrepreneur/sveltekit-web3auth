@@ -224,12 +224,7 @@
       !session?.user &&
       (!session?.error || hasErrorThatShouldResultInLoggingInAgain)
     ) {
-      console.log(
-        "Session user is not set. There are either no errors, or the errors indicate logging in is required as they were present in the `errorsToReinitiateLogin` list"
-      );
-
       clearAuthStoreInfo();
-
       await metaMaskLogin({ clientId });
     } else if (session?.error) {
       console.log("There is an error in the session", session?.error);
@@ -471,10 +466,10 @@
 
     AuthStore.isLoading.set(false);
     if (!$session.user) {
-      console.log("mounted without user in session", { session: $session });
+      // console.log("mounted without user in session", { session: $session });
       clearAuthStoreInfo();
     } else {
-      console.log("mounted with user in session", { session: $session });
+      // console.log("mounted with user in session", { session: $session });
       setAuthStoreInfoFromSession($session);
 
       const accessToken = $session.accessToken;

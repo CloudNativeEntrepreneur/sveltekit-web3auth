@@ -89,7 +89,6 @@ export const getUserSession: GetUserSessionFn = async (
           const data = await res.json();
 
           if (data?.error && request.locals?.retries < refreshTokenMaxRetries) {
-            console.log(`hooks.ts:92 - Renewing web3auth token`);
             const newTokenData = await renewWeb3AuthToken(
               request.locals.refreshToken,
               issuer,
@@ -132,7 +131,6 @@ export const getUserSession: GetUserSessionFn = async (
     } else {
       try {
         if (request.locals?.retries < refreshTokenMaxRetries) {
-          console.log(`hooks.ts:135 - Renewing web3auth token`);
           const newTokenData = await renewWeb3AuthToken(
             request.locals.refreshToken,
             issuer,
