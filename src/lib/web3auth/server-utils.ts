@@ -40,7 +40,6 @@ export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
   let userJsonParseFailed = false;
   try {
     if (request.headers?.user) {
-      console.log("setting user from headers");
       request.locals.user = JSON.parse(request.headers.user);
     } else {
       if (
@@ -48,7 +47,6 @@ export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
         userInfo?.user !== "null" &&
         userInfo?.user !== "undefined"
       ) {
-        console.log("setting user from userInfo");
         request.locals.user = JSON.parse(userInfo.user);
         if (!request.locals.user) {
           userJsonParseFailed = true;

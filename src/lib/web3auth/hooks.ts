@@ -163,11 +163,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
   const tokenExpired = isTokenExpired(request.locals.accessToken);
   const beforeAccessToken = request.locals.accessToken;
 
-  // console.log(1, request)
-
   request = { ...request, ...(yield) };
-
-  // console.log(2, request)
 
   let response: ServerResponse = { status: 200, headers: {} };
   const afterAccessToken = request.locals.accessToken;
