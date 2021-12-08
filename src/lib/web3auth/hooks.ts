@@ -12,7 +12,8 @@ import {
   parseUser,
   populateResponseHeaders,
   populateRequestLocals,
-} from "./hooks-utils";
+  setRequestLocalsFromNewTokens,
+} from "./server-utils";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
 // This function is recursive - if a user does not have an access token, but a refresh token
@@ -26,21 +27,26 @@ export const getUserSession: GetUserSessionFn = async (
   refreshTokenMaxRetries
 ) => {
   try {
-    if (request.locals?.accessToken) {
-      if (
-        request.locals.user &&
-        request.locals.userid &&
-        !isTokenExpired(request.locals.accessToken)
-      ) {
-        return {
-          user: { ...request.locals.user },
-          accessToken: request.locals.accessToken,
-          refreshToken: request.locals.refreshToken,
-          userid: request.locals.user.sub,
-          authServerOnline: true,
-        };
-      }
+    if (
+      request.locals?.accessToken &&
+      !isTokenExpired(request.locals?.accessToken) &&
+      request.locals?.user &&
+      request.locals?.userid
+    ) {
+      console.log(
+        "has valid access token and user information set - returning"
+      );
+      return {
+        user: { ...request.locals.user },
+        accessToken: request.locals.accessToken,
+        refreshToken: request.locals.refreshToken,
+        userid: request.locals.user.address,
+        authServerOnline: true,
+      };
+    } else {
+      console.log("get user session - no access token present");
 
+      // Check auth server is ready
       try {
         const testAuthServerResponse = await fetch(issuer, {
           headers: {
@@ -59,120 +65,57 @@ export const getUserSession: GetUserSessionFn = async (
         };
       }
 
-      console.log("hooks: getUserSession: /userinfo");
-      const res = await fetch(`${issuer}/userinfo`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${request.locals.accessToken}`,
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        // console.log('userinfo fetched');
-        request.locals.userid = data.sub;
-        request.locals.user = { ...data };
-        return {
-          user: {
-            // only include properties needed client-side —
-            // exclude anything else attached to the user
-            // like access tokens etc
-            ...data,
-          },
-          accessToken: request.locals.accessToken,
-          refreshToken: request.locals.refreshToken,
-          userid: data.sub,
-          authServerOnline: true,
-        };
-      } else {
-        try {
-          const data = await res.json();
-
-          if (data?.error && request.locals?.retries < refreshTokenMaxRetries) {
-            const newTokenData = await renewWeb3AuthToken(
-              request.locals.refreshToken,
-              issuer,
-              clientId,
-              clientSecret
-            );
-
-            if (newTokenData?.error) {
-              throw {
-                error: data?.error ? data.error : "user_info error",
-                errorDescription: data?.errorDescription
-                  ? data.errorDescription
-                  : "Unable to retrieve user Info",
-              };
-            } else {
-              request.locals.accessToken = newTokenData.accessToken;
-              request.locals.retries = request.locals.retries + 1;
-              return await getUserSession(
-                request,
-                issuer,
-                clientId,
-                clientSecret,
-                refreshTokenMaxRetries
-              );
-            }
-          }
-
-          throw {
-            error: data?.error ? data.error : "user_info error",
-            errorDescription: data?.errorDescription
-              ? data.errorDescription
-              : "Unable to retrieve user Info",
-          };
-        } catch (e) {
-          throw {
-            ...e,
-          };
-        }
-      }
-    } else {
+      // try to refresh
       try {
-        if (request.locals?.retries < refreshTokenMaxRetries) {
-          const newTokenData = await renewWeb3AuthToken(
+        if (
+          request.locals?.refreshToken &&
+          request.locals?.retries < refreshTokenMaxRetries
+        ) {
+          console.log(
+            "attempting to exchange refresh token",
+            request.locals?.retries
+          );
+          const tokenSet = await renewWeb3AuthToken(
             request.locals.refreshToken,
             issuer,
             clientId,
             clientSecret
           );
 
-          if (newTokenData?.error) {
+          if (tokenSet?.error) {
             throw {
-              error: newTokenData.error,
-              errorDescription: newTokenData.errorDescription,
+              error: tokenSet.error,
+              errorDescription: tokenSet.errorDescription,
             };
-          } else {
-            request.locals.accessToken = newTokenData.accessToken;
-            request.locals.retries = request.locals.retries + 1;
-            return await getUserSession(request, clientSecret);
           }
-        }
-      } catch (e) {} // eslint-disable-line no-empty
-      try {
-        const testAuthServerResponse = await fetch(issuer, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!testAuthServerResponse.ok) {
-          throw {
-            error: await testAuthServerResponse.json(),
-          };
+
+          setRequestLocalsFromNewTokens(request, tokenSet);
+
+          request.locals.retries = request.locals.retries + 1;
+          return await getUserSession(
+            request,
+            issuer,
+            clientId,
+            clientSecret,
+            refreshTokenMaxRetries
+          );
         }
       } catch (e) {
         throw {
-          error: "auth_server_conn_error",
-          errorDescription: "Auth Server Connection Error",
+          error: e.error || "token_refresh_error",
+          errorDescription: `Unable to exchange refresh token: ${e.errorDescription}`,
         };
       }
+
+      console.log("no refresh token, or max retries reached");
+      // no access token or refresh token
       throw {
         error: "missing_jwt",
         errorDescription: "access token not found or is null",
       };
     }
   } catch (err) {
+    console.log("returning without user info");
     request.locals.accessToken = "";
     request.locals.refreshToken = "";
     request.locals.userid = "";
@@ -217,7 +160,6 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
 
   // Parsing user object
   const userJsonParseFailed = parseUser(request, userInfo);
-
   const tokenExpired = isTokenExpired(request.locals.accessToken);
   const beforeAccessToken = request.locals.accessToken;
 
@@ -236,8 +178,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
     tokenExpired ||
     beforeAccessToken !== afterAccessToken
   ) {
-    // if this is the first time the user has visited this app,
-    // set a cookie so that we recognise them when they return
+    // set a cookie so that we recognize future requests
     response = injectCookies(request, response);
   }
 

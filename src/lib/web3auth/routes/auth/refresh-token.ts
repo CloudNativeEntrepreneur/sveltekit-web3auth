@@ -1,8 +1,8 @@
-import jwtDecode from "jwt-decode";
 import type { Locals } from "../../../types";
 import type { RequestHandler } from "@sveltejs/kit";
 import { renewWeb3AuthToken } from "../../auth-api";
 import { parseCookie } from "../../cookie";
+import { setRequestLocalsFromNewTokens } from "../../server-utils";
 
 export const post =
   (clientSecret, issuer): RequestHandler<Locals, FormData> =>
@@ -19,25 +19,13 @@ export const post =
       clientSecret
     );
 
-    const parsedUserInfo: any = jwtDecode(auth.idToken);
-    delete parsedUserInfo.aud;
-    delete parsedUserInfo.exp;
-    delete parsedUserInfo.iat;
-    delete parsedUserInfo.iss;
-    delete parsedUserInfo.sub;
-    delete parsedUserInfo.typ;
+    setRequestLocalsFromNewTokens(request, auth);
 
     const response = {
       body: {
         ...auth,
       },
     };
-
-    // Cookie is set based on locals value in next step
-    request.locals.userid = parsedUserInfo.address;
-    request.locals.user = parsedUserInfo;
-    request.locals.accessToken = auth.accessToken;
-    request.locals.refreshToken = auth.refreshToken;
 
     return response;
   };
