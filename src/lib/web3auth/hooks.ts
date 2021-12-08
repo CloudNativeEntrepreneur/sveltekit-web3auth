@@ -12,7 +12,8 @@ import {
   parseUser,
   populateResponseHeaders,
   populateRequestLocals,
-} from "./hooks-utils";
+  setRequestLocalsFromNewTokens,
+} from "./server-utils";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
 // This function is recursive - if a user does not have an access token, but a refresh token
@@ -74,23 +75,22 @@ export const getUserSession: GetUserSessionFn = async (
             "attempting to exchange refresh token",
             request.locals?.retries
           );
-          const newTokenData = await renewWeb3AuthToken(
+          const tokenSet = await renewWeb3AuthToken(
             request.locals.refreshToken,
             issuer,
             clientId,
             clientSecret
           );
 
-          if (newTokenData?.error) {
+          if (tokenSet?.error) {
             throw {
-              error: newTokenData.error,
-              errorDescription: newTokenData.errorDescription,
+              error: tokenSet.error,
+              errorDescription: tokenSet.errorDescription,
             };
           }
 
-          request.locals.accessToken = newTokenData.accessToken;
-          request.locals.refreshToken = newTokenData.refreshToken;
-          request.locals.idToken = newTokenData.idToken;
+          setRequestLocalsFromNewTokens(request, tokenSet);
+
           request.locals.retries = request.locals.retries + 1;
           return await getUserSession(
             request,

@@ -1,3 +1,4 @@
+import jwtDecode from "jwt-decode";
 import type { Locals } from "../types";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 
@@ -107,4 +108,20 @@ export const populateResponseHeaders = (
   }
 
   return response;
+};
+
+export const setRequestLocalsFromNewTokens = (request, tokenSet) => {
+  const parsedUserInfo: any = jwtDecode(tokenSet.idToken);
+  delete parsedUserInfo.aud;
+  delete parsedUserInfo.exp;
+  delete parsedUserInfo.iat;
+  delete parsedUserInfo.iss;
+  delete parsedUserInfo.sub;
+  delete parsedUserInfo.typ;
+
+  // Cookie is set based on locals value in next step
+  request.locals.userid = parsedUserInfo.address;
+  request.locals.user = parsedUserInfo;
+  request.locals.accessToken = tokenSet.accessToken;
+  request.locals.refreshToken = tokenSet.refreshToken;
 };
