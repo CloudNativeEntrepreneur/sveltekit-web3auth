@@ -15,7 +15,10 @@ const clientSecret =
   config.web3auth.clientSecret;
 const refreshTokenMaxRetries = config.web3auth.refreshTokenMaxRetries;
 
+// https://kit.svelte.dev/docs#hooks-handle
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
+  console.log("handle", request.path);
+
   // Initialization part
   const userGen = userDetailsGenerator(request);
   const { value, done } = await userGen.next();
@@ -28,24 +31,23 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
   // Set Cookie attributes
   request.locals.cookieAttributes = "Path=/; HttpOnly;";
 
-  if (request.query.has("_method")) {
-    request.method = request.query.get("_method").toUpperCase();
-  }
-  // Handle resolve
+  // response is the page sveltekit route that was rendered, we're
+  // intercepting it and adding headers on the way out
   const response = await resolve(request);
 
-  // After your code ends, Populate response headers with Auth Info
-  // wrap up response by over-riding headers and status
-  if (response?.status !== 404) {
-    const extraResponse = (await userGen.next(request)).value;
-    const { Location, ...restHeaders } = extraResponse.headers;
-    // SSR Redirection
-    if (extraResponse.status === 302 && Location) {
-      response.status = extraResponse.status;
-      response.headers["Location"] = Location;
-    }
-    response.headers = { ...response.headers, ...restHeaders };
+  if (response?.status === 404) {
+    return response;
   }
+
+  const extraResponse = (await userGen.next(request)).value;
+  const { Location, ...restHeaders } = extraResponse.headers;
+  // SSR Redirection
+  if (extraResponse.status === 302 && Location) {
+    response.status = extraResponse.status;
+    response.headers["Location"] = Location;
+  }
+  response.headers = { ...response.headers, ...restHeaders };
+
   return response;
 };
 
@@ -53,6 +55,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
+  console.log("getSession", request.locals?.user);
   const userSession = await getUserSession(
     request,
     issuer,

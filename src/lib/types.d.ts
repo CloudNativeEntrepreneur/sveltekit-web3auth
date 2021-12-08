@@ -9,6 +9,7 @@ export interface Locals {
   userid: string;
   accessToken: string;
   refreshToken: string;
+  idToken: string;
   authError?: AuthError;
   user?: any;
   retries?: number;
