@@ -1,4 +1,7 @@
-onboard: install dev
+onboard: install
+
+open: 
+	code .
 
 install:
 	npm ci
