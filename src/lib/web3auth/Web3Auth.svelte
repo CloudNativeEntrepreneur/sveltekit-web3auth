@@ -284,6 +284,7 @@
     refreshTokenToExchange,
     requester?: string
   ) => {
+    // console.log(`attempting token refresh for "${requester}"`);
     const web3authContextClientFn = await web3authPromise;
     const { clientId } = web3authContextClientFn();
     try {
