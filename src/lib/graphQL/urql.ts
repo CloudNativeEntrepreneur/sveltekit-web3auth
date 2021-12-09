@@ -8,10 +8,10 @@ import {
 } from "@urql/svelte";
 import { makeOperation } from "@urql/core";
 import { authExchange } from "@urql/exchange-auth";
-import { accessToken, refreshToken } from "../web3auth/Web3Auth.svelte";
+import { tokenRefresh } from "../web3auth/Web3Auth.svelte";
 import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
-import { get } from "svelte/store";
+import { isTokenExpired } from "../web3auth/jwt";
 
 export const graphQLClient = (
   session,
@@ -22,19 +22,35 @@ export const graphQLClient = (
   },
   fetch,
   ws,
-  stws
+  stws,
+  web3authPromise
 ) => {
+  console.log('new client')
   const isServerSide = !browser;
 
-  const fetchOptions = () => {
-    const currentAccessToken = get(accessToken);
-    const sessionAccessToken = session.accessToken;
-    const eitherAccessToken = currentAccessToken || sessionAccessToken;
+  const fetchOptions = async () => {
+    
+    const accessToken = session.accessToken;
+    const refreshToken = session.refreshToken;
+    
+    let currentTokenSet = {
+      accessToken,
+      refreshToken,
+    };
+    
+    console.log('creating fetch options', { currentTokenSet})
+
+    if (!!currentTokenSet.accessToken && isTokenExpired(currentTokenSet.accessToken)) {
+      console.log('fetch options token refresh')
+      currentTokenSet = await tokenRefresh(web3authPromise, currentTokenSet.refreshToken, `urql ${isServerSide ? 'server' : 'browser'} client - fetch options`)
+    } else {
+      console.log('fetch options tokens are good')
+    }
 
     const authHeaders: any = {};
 
-    if (eitherAccessToken) {
-      authHeaders.authorization = `Bearer ${eitherAccessToken}`;
+    if (currentTokenSet.accessToken) {
+      authHeaders.authorization = `Bearer ${currentTokenSet.accessToken}`;
     }
 
     return {
@@ -44,13 +60,11 @@ export const graphQLClient = (
     };
   };
 
-  const connectionParams = fetchOptions();
-
   const subscriptionClient = new stws.SubscriptionClient(
     graphQLConfig.ws,
     {
       reconnect: true,
-      connectionParams,
+      connectionParams: fetchOptions,
     },
     isServerSide ? ws : WebSocket
   );
@@ -103,34 +117,41 @@ export const graphQLClient = (
           return newOperation;
         },
         getAuth: async (options: { authState: any }) => {
-          // const { authState } = options
-
-          const currentAccessToken = get(accessToken);
-          const sessionAccessToken = session.accessToken;
-          const eitherAccessToken = currentAccessToken || sessionAccessToken;
-          const currentRefreshToken = get(refreshToken);
-          const sessionRefreshToken = session.accessToken;
-          const eitherRefreshToken = currentRefreshToken || sessionRefreshToken;
-
-          return {
-            accessToken: eitherAccessToken,
-            refreshToken: eitherRefreshToken,
+          const { authState } = options;
+          console.log('getAuth', authState)
+          const accessToken = session.accessToken;
+          const refreshToken = session.refreshToken;
+          
+          const currentTokenSet = {
+            accessToken,
+            refreshToken,
           };
+
+          // silent refresh already happening and setting session tokens
+          if (isTokenExpired(currentTokenSet.accessToken)) {
+            console.log('token refresh')
+            return await tokenRefresh(web3authPromise, currentTokenSet.refreshToken, `urql ${isServerSide ? 'server' : 'browser'} client - getAuth`)
+          } else {
+            console.log('tokens are good')
+          }
+
+          return currentTokenSet;
         },
         willAuthError: ({ authState }) => {
-          // TODO: do better stuff here
-          // console.log("will auth error", authState);
-          if (!authState) return true;
-          // e.g. check for expiration, existence of auth etc
+          if (!authState?.accessToken || isTokenExpired(authState?.accessToken)) {
+            return true;
+          }
           return false;
         },
         didAuthError: ({ error }) => {
-          // TODO: do better stuff here
-          // console.log("did auth error", error);
-          // check if the error was an auth error (this can be implemented in various ways, e.g. 401 or a special error code)
-          return error.graphQLErrors.some(
+          if (error?.networkError && error.message.includes('JWTExpired')) return true          
+          const hasGQLAuthErrors = error.graphQLErrors?.some(
             (e) => e.extensions?.code === "FORBIDDEN"
           );
+
+          if (hasGQLAuthErrors) return true
+
+          return false
         },
       }),
       ssr,
