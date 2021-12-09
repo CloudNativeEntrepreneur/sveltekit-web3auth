@@ -25,26 +25,32 @@ export const graphQLClient = (
   stws,
   web3authPromise
 ) => {
-  console.log('new client')
+  console.log("new client");
   const isServerSide = !browser;
 
   const fetchOptions = async () => {
-    
     const accessToken = session.accessToken;
     const refreshToken = session.refreshToken;
-    
+
     let currentTokenSet = {
       accessToken,
       refreshToken,
     };
-    
-    console.log('creating fetch options', { currentTokenSet})
 
-    if (!!currentTokenSet.accessToken && isTokenExpired(currentTokenSet.accessToken)) {
-      console.log('fetch options token refresh')
-      currentTokenSet = await tokenRefresh(web3authPromise, currentTokenSet.refreshToken, `urql ${isServerSide ? 'server' : 'browser'} client - fetch options`)
+    console.log("creating fetch options", { currentTokenSet });
+
+    if (
+      !!currentTokenSet.accessToken &&
+      isTokenExpired(currentTokenSet.accessToken)
+    ) {
+      console.log("fetch options token refresh");
+      currentTokenSet = await tokenRefresh(
+        web3authPromise,
+        currentTokenSet.refreshToken,
+        `urql ${isServerSide ? "server" : "browser"} client - fetch options`
+      );
     } else {
-      console.log('fetch options tokens are good')
+      console.log("fetch options tokens are good");
     }
 
     const authHeaders: any = {};
@@ -118,10 +124,10 @@ export const graphQLClient = (
         },
         getAuth: async (options: { authState: any }) => {
           const { authState } = options;
-          console.log('getAuth', authState)
+          console.log("getAuth", authState);
           const accessToken = session.accessToken;
           const refreshToken = session.refreshToken;
-          
+
           const currentTokenSet = {
             accessToken,
             refreshToken,
@@ -129,29 +135,37 @@ export const graphQLClient = (
 
           // silent refresh already happening and setting session tokens
           if (isTokenExpired(currentTokenSet.accessToken)) {
-            console.log('token refresh')
-            return await tokenRefresh(web3authPromise, currentTokenSet.refreshToken, `urql ${isServerSide ? 'server' : 'browser'} client - getAuth`)
+            console.log("token refresh");
+            return await tokenRefresh(
+              web3authPromise,
+              currentTokenSet.refreshToken,
+              `urql ${isServerSide ? "server" : "browser"} client - getAuth`
+            );
           } else {
-            console.log('tokens are good')
+            console.log("tokens are good");
           }
 
           return currentTokenSet;
         },
         willAuthError: ({ authState }) => {
-          if (!authState?.accessToken || isTokenExpired(authState?.accessToken)) {
+          if (
+            !authState?.accessToken ||
+            isTokenExpired(authState?.accessToken)
+          ) {
             return true;
           }
           return false;
         },
         didAuthError: ({ error }) => {
-          if (error?.networkError && error.message.includes('JWTExpired')) return true          
+          if (error?.networkError && error.message.includes("JWTExpired"))
+            return true;
           const hasGQLAuthErrors = error.graphQLErrors?.some(
             (e) => e.extensions?.code === "FORBIDDEN"
           );
 
-          if (hasGQLAuthErrors) return true
+          if (hasGQLAuthErrors) return true;
 
-          return false
+          return false;
         },
       }),
       ssr,

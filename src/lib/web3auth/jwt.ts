@@ -6,7 +6,7 @@ export const getTokenData = (jwt: string): any => {
     try {
       data = JSON.parse(atob(jwt.split(".")[1]).toString());
     } catch (err) {
-      return {}
+      return {};
     }
   }
 
@@ -21,10 +21,15 @@ export function isTokenExpired(jwt: string): boolean {
   const tokenTimeSkew = 10; // 10 seconds before actual token exp
 
   data = getTokenData(jwt);
-  const now = new Date().getTime() / 1000
-  const expirationTime = data?.exp || 0 - tokenTimeSkew
+  const now = new Date().getTime() / 1000;
+  const expirationTime = data?.exp || 0 - tokenTimeSkew;
   const timeRemaining = expirationTime - now;
   const isExpired = now > expirationTime;
-  console.log('isTokenExpired', { now, expirationTime, isExpired, timeRemaining })
+  console.log("isTokenExpired", {
+    now,
+    expirationTime,
+    isExpired,
+    timeRemaining,
+  });
   return isExpired;
 }
