@@ -43,7 +43,7 @@
     idToken: string;
     refreshToken: string;
   }) => {
-    console.log("onReceivedNewTokens", tokens);
+    // console.log("onReceivedNewTokens", tokens);
     const user = getTokenData(tokens.idToken);
     delete user.aud;
     delete user.exp;
@@ -284,7 +284,6 @@
     refreshTokenToExchange,
     requester?: string
   ) => {
-    console.log(`attempting token refresh for "${requester}"`);
     const web3authContextClientFn = await web3authPromise;
     const { clientId } = web3authContextClientFn();
     try {
