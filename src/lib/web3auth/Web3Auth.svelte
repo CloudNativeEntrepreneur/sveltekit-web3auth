@@ -10,6 +10,7 @@
   } from "../types";
   import { handleAuthenticate, handleSignup } from "./routes-api";
   import { handleSignMessage } from "./metamask";
+  import { getTokenData } from "./jwt";
 
   let web3;
 
@@ -42,7 +43,7 @@
     idToken: string;
     refreshToken: string;
   }) => {
-    const user = JSON.parse(atob(tokens.idToken.split(".")[1]).toString());
+    const user = getTokenData(tokens.idToken);
     delete user.aud;
     delete user.exp;
     delete user.iat;
