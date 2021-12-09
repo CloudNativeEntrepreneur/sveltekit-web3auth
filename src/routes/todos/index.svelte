@@ -18,9 +18,7 @@
   import { get } from "svelte/store";
   import Todo from "../../components/todos/Todo.svelte";
   import { getContext } from "svelte";
-  import {
-    WEB3AUTH_CONTEXT_CLIENT_PROMISE,
-  } from "$lib/web3auth/Web3Auth.svelte";
+  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "$lib/web3auth/Web3Auth.svelte";
 
   const issuer = config.web3auth.issuer;
   const clientId = config.web3auth.clientId;
@@ -137,7 +135,7 @@
 
     const web3authPromise = Promise.resolve(() => ({
       clientId,
-      issuer
+      issuer,
     }));
 
     let serverGQLClient = await graphQLClient(
@@ -198,9 +196,7 @@
     subscription(todosCountSubscription, handleTodosCountSubscription);
   };
   if (browser) {
-    const web3authPromise = getContext(
-      WEB3AUTH_CONTEXT_CLIENT_PROMISE
-    );
+    const web3authPromise = getContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE);
     const browserGQLClient = graphQLClient(
       $session,
       config.graphql,
@@ -303,7 +299,10 @@
   });
   const optimisticCommandTodoRemove = (todo) => {
     let optimisticTodos = [...todos];
-    optimisticTodos.splice(optimisticTodos.findIndex((t) => t.id === todo.id), 1);
+    optimisticTodos.splice(
+      optimisticTodos.findIndex((t) => t.id === todo.id),
+      1
+    );
     todos = optimisticTodos;
     count--;
     return commandTodoRemove({
