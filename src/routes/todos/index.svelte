@@ -286,7 +286,7 @@
   });
   const optimisticCommandTodoRemove = (todo) => {
     let optimisticTodos = [...todos];
-    optimisticTodos.splice(optimisticTodos.findIndex((t) => t.id === todo.id));
+    optimisticTodos.splice(optimisticTodos.findIndex((t) => t.id === todo.id), 1);
     todos = optimisticTodos;
     count--;
     return commandTodoRemove({
