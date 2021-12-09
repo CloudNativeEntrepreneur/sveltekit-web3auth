@@ -25,7 +25,7 @@ export const graphQLClient = (
   stws,
   web3authPromise
 ) => {
-  console.log("new client");
+  // console.log("new gql client");
   const isServerSide = !browser;
 
   const fetchOptions = async () => {
