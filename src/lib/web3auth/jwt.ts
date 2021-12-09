@@ -14,13 +14,12 @@ export const getTokenData = (jwt: string): any => {
 };
 
 export function isTokenExpired(jwt: string): boolean {
-  let data;
   if (!jwt || jwt.length < 10) {
     return true;
   }
   const tokenTimeSkew = 10; // 10 seconds before actual token exp
 
-  data = getTokenData(jwt);
+  const data = getTokenData(jwt);
   const now = new Date().getTime() / 1000;
   const expirationTime = data?.exp || 0 - tokenTimeSkew;
   const timeRemaining = expirationTime - now;
