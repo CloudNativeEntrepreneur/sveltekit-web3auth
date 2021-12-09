@@ -45,7 +45,7 @@ export const graphQLClient = (
           `urql ${isServerSide ? "server" : "browser"} client - fetchOptions`
         );
       }
-    } 
+    }
 
     const authHeaders: any = {};
 
@@ -134,10 +134,10 @@ export const graphQLClient = (
                 `urql ${isServerSide ? "server" : "browser"} client - getAuth`
               );
             } else {
-              return currentTokenSet
+              return currentTokenSet;
             }
           } else {
-            return null
+            return null;
           }
         },
         willAuthError: ({ authState }) => {
