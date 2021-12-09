@@ -37,21 +37,15 @@ export const graphQLClient = (
       refreshToken,
     };
 
-    console.log("creating fetch options", { currentTokenSet });
-
-    if (
-      !!currentTokenSet.accessToken &&
-      isTokenExpired(currentTokenSet.accessToken)
-    ) {
-      console.log("fetch options token refresh");
-      currentTokenSet = await tokenRefresh(
-        web3authPromise,
-        currentTokenSet.refreshToken,
-        `urql ${isServerSide ? "server" : "browser"} client - fetch options`
-      );
-    } else {
-      console.log("fetch options tokens are good");
-    }
+    if (!!currentTokenSet.accessToken && !!currentTokenSet.refreshToken) {
+      if (isTokenExpired(currentTokenSet.accessToken)) {
+        currentTokenSet = await tokenRefresh(
+          web3authPromise,
+          currentTokenSet.refreshToken,
+          `urql ${isServerSide ? "server" : "browser"} client - fetchOptions`
+        );
+      }
+    } 
 
     const authHeaders: any = {};
 
@@ -124,7 +118,6 @@ export const graphQLClient = (
         },
         getAuth: async (options: { authState: any }) => {
           const { authState } = options;
-          console.log("getAuth", authState);
           const accessToken = session.accessToken;
           const refreshToken = session.refreshToken;
 
@@ -133,19 +126,19 @@ export const graphQLClient = (
             refreshToken,
           };
 
-          // silent refresh already happening and setting session tokens
-          if (isTokenExpired(currentTokenSet.accessToken)) {
-            console.log("token refresh");
-            return await tokenRefresh(
-              web3authPromise,
-              currentTokenSet.refreshToken,
-              `urql ${isServerSide ? "server" : "browser"} client - getAuth`
-            );
+          if (!!currentTokenSet.accessToken && !!currentTokenSet.refreshToken) {
+            if (isTokenExpired(currentTokenSet.accessToken)) {
+              return await tokenRefresh(
+                web3authPromise,
+                currentTokenSet.refreshToken,
+                `urql ${isServerSide ? "server" : "browser"} client - getAuth`
+              );
+            } else {
+              return currentTokenSet
+            }
           } else {
-            console.log("tokens are good");
+            return null
           }
-
-          return currentTokenSet;
         },
         willAuthError: ({ authState }) => {
           if (
