@@ -17,7 +17,7 @@
 
 <button
   class={clazz}
-  on:click|preventDefault={() => tokenRefresh(web3authPromise, $refreshToken)}
+  on:click|preventDefault={() => tokenRefresh(web3authPromise, $refreshToken, 'refresh button')}
 >
   <slot />
 </button>

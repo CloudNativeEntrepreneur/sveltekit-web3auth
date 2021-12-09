@@ -43,6 +43,7 @@
     idToken: string;
     refreshToken: string;
   }) => {
+    console.log('onReceivedNewTokens', tokens)
     const user = getTokenData(tokens.idToken);
     delete user.aud;
     delete user.exp;
@@ -280,8 +281,10 @@
 
   export const tokenRefresh = async (
     web3authPromise: Web3AuthContextClientPromise,
-    refreshTokenToExchange
+    refreshTokenToExchange,
+    requester?: string
   ) => {
+    console.log(`attempting token refresh for "${ requester }"`)
     const web3authContextClientFn = await web3authPromise;
     const { clientId } = web3authContextClientFn();
     try {
@@ -389,7 +392,8 @@
       // console.log("Doing silent refresh", refreshTokenToExchange);
       const { accessToken, refreshToken } = await tokenRefresh(
         web3authContextClientPromise,
-        refreshTokenToExchange
+        refreshTokenToExchange,
+        'silent refresh'
       );
 
       scheduleNextSilentRefresh(

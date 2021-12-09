@@ -17,6 +17,13 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
   import Todo from "../../components/todos/Todo.svelte";
+  import { getContext } from "svelte";
+  import {
+    WEB3AUTH_CONTEXT_CLIENT_PROMISE,
+  } from "$lib/web3auth/Web3Auth.svelte";
+
+  const issuer = config.web3auth.issuer;
+  const clientId = config.web3auth.clientId;
 
   export const queryToObject = (params) => {
     // parse query string
@@ -128,12 +135,18 @@
       },
     };
 
+    const web3authPromise = Promise.resolve(() => ({
+      clientId,
+      issuer
+    }));
+
     let serverGQLClient = await graphQLClient(
       session,
       config.graphql,
       fetch,
       ws,
-      stws
+      stws,
+      web3authPromise
     );
 
     const result = await serverGQLClient.query(QUERY, variables).toPromise();
@@ -185,12 +198,16 @@
     subscription(todosCountSubscription, handleTodosCountSubscription);
   };
   if (browser) {
+    const web3authPromise = getContext(
+      WEB3AUTH_CONTEXT_CLIENT_PROMISE
+    );
     const browserGQLClient = graphQLClient(
       $session,
       config.graphql,
       window.fetch,
       ws,
-      stws
+      stws,
+      web3authPromise
     );
     startSubscriptions(browserGQLClient);
   }
