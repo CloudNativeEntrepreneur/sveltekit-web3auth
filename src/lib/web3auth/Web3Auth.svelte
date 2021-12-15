@@ -329,6 +329,7 @@
   export let issuer: string;
   export let clientId: string;
   export let postLogoutRedirectURI: string;
+  let currentSilentRefreshTimeout = null;
 
   const web3authContextClientFn: Web3AuthContextClientFn = () => {
     const state = {
@@ -347,11 +348,7 @@
   setContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE, web3authContextClientPromise);
   setContext(WEB3AUTH_CONTEXT_POST_LOGOUT_REDIRECT_URI, postLogoutRedirectURI);
 
-  const scheduleNextSilentRefresh = (
-    currentSilentRefreshTimeout,
-    accessToken,
-    refreshToken
-  ) => {
+  const scheduleNextSilentRefresh = (accessToken, refreshToken) => {
     const jwtData = JSON.parse(atob(accessToken.split(".")[1]).toString());
     const tokenSkew = 10; // 10 seconds before actual token expiry
     const skewedTimeoutDuration =
@@ -362,7 +359,6 @@
         : skewedTimeoutDuration + tokenSkew * 1000;
 
     if (currentSilentRefreshTimeout) {
-      // console.log('clearing silent refresh timeout', currentSilentRefreshTimeout)
       clearTimeout(currentSilentRefreshTimeout);
     }
 
@@ -387,21 +383,15 @@
     }
   };
 
-  let currentSilentRefreshTimeout = null;
   async function silentRefresh(refreshTokenToExchange: string) {
     try {
-      // console.log("Doing silent refresh", refreshTokenToExchange);
       const { accessToken, refreshToken } = await tokenRefresh(
         web3authContextClientPromise,
         refreshTokenToExchange,
         "silent refresh"
       );
 
-      scheduleNextSilentRefresh(
-        currentSilentRefreshTimeout,
-        accessToken,
-        refreshToken
-      );
+      scheduleNextSilentRefresh(accessToken, refreshToken);
     } catch (e) {
       console.error("Silent Refresh Error:", e);
       if (currentSilentRefreshTimeout) {
@@ -480,11 +470,7 @@
 
       const accessToken = $session.accessToken;
       const refreshToken = $session.accessToken;
-      scheduleNextSilentRefresh(
-        currentSilentRefreshTimeout,
-        accessToken,
-        refreshToken
-      );
+      scheduleNextSilentRefresh(accessToken, refreshToken);
       AuthStore.authError.set(null);
 
       try {
@@ -502,19 +488,27 @@
 
   // TODO: this breaks when packaged
   // -----
-  // onDestroy(() => {
-  //   if (browser) {
-  //     if (currentSilentRefreshTimeout) {
-  //       clearTimeout(currentSilentRefreshTimeout);
-  //     }
-  //     try {
-  //       window.removeEventListener("storage", syncLogout);
-  //       window.removeEventListener("storage", syncLogin);
-  //     } catch (err) {
-  //       console.error("Error removing storage event listeners", err);
-  //     }
-  //   }
-  // });
+
+  if (browser) {
+    onDestroy(() => {
+      if (currentSilentRefreshTimeout) {
+        try {
+          clearTimeout(currentSilentRefreshTimeout);
+        } catch (err) {
+          console.error("Error clearing timeout", err);
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        try {
+          window.removeEventListener("storage", syncLogout);
+          window.removeEventListener("storage", syncLogin);
+        } catch (err) {
+          console.error("Error removing storage event listeners", err);
+        }
+      }
+    });
+  }
 </script>
 
 <slot />
