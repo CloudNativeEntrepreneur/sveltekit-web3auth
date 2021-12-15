@@ -230,9 +230,10 @@
       await metaMaskLogin({ clientId });
     } else if (session?.error) {
       console.log("There is an error in the session", session?.error);
-
       AuthStore.authError.set(session.error);
       AuthStore.isLoading.set(false);
+      clearAuthStoreInfo();
+      await metaMaskLogin({ clientId });
     } else {
       AuthStore.isLoading.set(false);
       setAuthStoreInfoFromSession(session);
