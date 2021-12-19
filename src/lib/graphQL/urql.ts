@@ -47,22 +47,17 @@ export const graphQLClient = (options: {
       ...authHeaders,
     },
   };
-  log("gql client init", { authHeaders });
 
   const existingClient = graphQLClients.find((c) => c.id === id);
   const isServerSide = !browser;
   if (existingClient) {
     log("found existing client", {
       isServerSide,
-      id,
       existingClient,
-      fetchOptions,
     });
     existingClient.fetchOptions = fetchOptions;
     return existingClient;
   }
-
-  log("new gql client", { isServerSide, id });
 
   const subscriptionClient = new stws.SubscriptionClient(
     graphql.ws,
@@ -137,7 +132,7 @@ export const graphQLClient = (options: {
     : createClient(clientConfig as any);
 
   Object.assign(client, { id });
-  log("created client", { isServerSide, client });
+  log("created client", { isServerSide, id });
 
   graphQLClients.push(client);
 

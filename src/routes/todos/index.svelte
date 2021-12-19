@@ -17,10 +17,8 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
   import Todo from "../../components/todos/Todo.svelte";
-  import debug from "debug";
 
   let graphqlClientInstance;
-  const log = debug("sveltekit-web3auth:routes/todos/index");
 
   export const queryToObject = (params) => {
     // parse query string
@@ -141,8 +139,6 @@
       stws,
     });
 
-    log("got gql client instance", graphqlClientInstance);
-
     const result = await graphqlClientInstance
       .query(QUERY, variables)
       .toPromise();
@@ -150,9 +146,6 @@
 
     if (data) {
       const { todos } = data;
-
-      log("got todos", todos);
-
       return {
         props: {
           todos,
@@ -185,23 +178,19 @@
   let commandTodoRemove;
 
   const handleTodosSubscription = (previousTodos = [], data) => {
-    log("new todos subscription data");
     todos = data.todos;
     return [...data.todos];
   };
 
   const handleTodosCountSubscription = (previousCount, data) => {
-    log("new todos count subscription data");
     count = data.todos_aggregate.aggregate.count;
     return count;
   };
 
   const startGQLClient = async () => {
-    log("starting subscription");
     if (graphqlClientInstance) {
       setClient(graphqlClientInstance);
     } else {
-      log("no gql client found, creating new instance");
       graphqlClientInstance = await graphQLClient({
         id: $session?.user?.address,
         session: $session,

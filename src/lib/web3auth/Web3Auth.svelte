@@ -46,7 +46,6 @@
     idToken: string;
     refreshToken: string;
   }) => {
-    log("onReceivedNewTokens", tokens);
     const user = getTokenData(tokens.idToken);
     delete user.aud;
     delete user.exp;
