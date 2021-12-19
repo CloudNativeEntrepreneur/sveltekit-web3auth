@@ -53,7 +53,7 @@ export const graphQLClient = (options: {
 
   const authHeaders: any = {};
   if (currentTokenSet.accessToken) {
-    authHeaders.authorization = `Bearer ${currentTokenSet.accessToken}`;
+    authHeaders.Authorization = `Bearer ${currentTokenSet.accessToken}`;
   }
   let fetchOptions = {
     headers: {
@@ -96,7 +96,7 @@ export const graphQLClient = (options: {
   //   const authHeaders: any = {};
 
   // if (currentTokenSet.accessToken) {
-  //   authHeaders.authorization = `Bearer ${currentTokenSet.accessToken}`;
+  //   authHeaders.Authorization = `Bearer ${currentTokenSet.accessToken}`;
   // }
 
   //   return {
@@ -116,7 +116,7 @@ export const graphQLClient = (options: {
         let currentAccessToken = get(accessToken)
         const authHeaders: any = {};
         if (currentAccessToken) {
-          authHeaders.authorization = `Bearer ${currentAccessToken}`;
+          authHeaders.Authorization = `Bearer ${currentAccessToken}`;
         }
         let fetchOptions = {
           headers: {
@@ -151,10 +151,10 @@ export const graphQLClient = (options: {
   //     const authHeaders: any = {};
 
   //     if (authState.accessToken) {
-  //       authHeaders.authorization = `Bearer ${authState.accessToken}`;
+  //       authHeaders.Authorization = `Bearer ${authState.accessToken}`;
   //     }
 
-  //     log('fetchOptions vs authHeaders', authHeaders.authorization === fetchOptions.headers.authorization)
+  //     log('fetchOptions vs authHeaders', authHeaders.Authorization === fetchOptions.headers.Authorization)
 
   //     const newOperation = makeOperation(
   //       operation.kind, 
