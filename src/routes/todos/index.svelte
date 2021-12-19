@@ -17,8 +17,6 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
   import Todo from "../../components/todos/Todo.svelte";
-  import { getContext } from "svelte";
-  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "$lib/web3auth/Web3Auth.svelte";
   import debug from "debug";
 
   let graphqlClientInstance;
@@ -136,11 +134,6 @@
       },
     };
 
-    const web3authPromise = Promise.resolve(() => ({
-      clientId,
-      issuer,
-    }));
-
     graphqlClientInstance = await graphQLClient({
       id: `${userAddress}`,
       session,
@@ -148,7 +141,6 @@
       fetch,
       ws,
       stws,
-      web3authPromise,
     });
 
     log("got gql client instance", graphqlClientInstance);

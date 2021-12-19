@@ -78,7 +78,8 @@ export const graphQLClient = (options: {
       connectionParams: (params) => {
         log("getting subscription connections params", params);
 
-        const currentAccessToken = get(accessToken);
+        const currentAccessToken =
+          get(accessToken) || currentTokenSet.accessToken;
         const authHeaders: any = {};
         if (currentAccessToken) {
           authHeaders.Authorization = `Bearer ${currentAccessToken}`;
@@ -116,7 +117,6 @@ export const graphQLClient = (options: {
     subscriptionExchange({
       forwardSubscription(operation) {
         log("forwarding subscription", operation, subscriptionClient);
-        // subscriptionClient.connectionParams = () => operation.context.fetchOptions
         return subscriptionClient.request(operation);
       },
     }),
