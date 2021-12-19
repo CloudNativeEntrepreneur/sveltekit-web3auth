@@ -166,14 +166,23 @@
 </script>
 
 <script>
+  if (graphqlClientInstance) {
+    setClient(graphqlClientInstance);
+  }
   export let todos;
   export let count;
-
-  log("TODOS SCRIPT");
 
   const limit = createQueryStore("limit");
   const order = createQueryStore("order");
   const offset = createQueryStore("offset");
+
+  let newTodo;
+
+  // commands
+  let commandTodoInitialize;
+  let commandTodoComplete;
+  let commandTodoReopen;
+  let commandTodoRemove;
 
   const handleTodosSubscription = (previousTodos = [], data) => {
     log("new todos subscription data");
@@ -187,9 +196,22 @@
     return count;
   };
 
-  const startSubscriptions = () => {
+  const startGQLClient = async () => {
     log("starting subscription");
-    setClient(graphqlClientInstance);
+    if (graphqlClientInstance) {
+      setClient(graphqlClientInstance);
+    } else {
+      log("no gql client found, creating new instance");
+      graphqlClientInstance = await graphQLClient({
+        id: $session?.user?.address,
+        session: $session,
+        graphql: config.graphql,
+        fetch: fetch || window.fetch,
+        ws,
+        stws,
+      });
+      setClient(graphqlClientInstance);
+    }
 
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {
       limit: get(limit) || defaults.limit,
@@ -201,26 +223,64 @@
 
     subscription(todosSubscription, handleTodosSubscription);
     subscription(todosCountSubscription, handleTodosCountSubscription);
-  };
-  if (browser) {
-    startSubscriptions();
-  }
 
-  const commandTodoInitialize = mutation({
-    query: `
-    mutation CommandInitializeTodo($todo: String!) {
-      command_todo_initialize(todo: $todo) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
+    // mutations
+    commandTodoInitialize = mutation({
+      query: `
+      mutation CommandInitializeTodo($todo: String!) {
+        command_todo_initialize(todo: $todo) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
       }
-    }
-  `,
-  });
-  let newTodo;
+    `,
+    });
+
+    commandTodoComplete = mutation({
+      query: `
+      mutation CommandCompleteTodo($id: String!) {
+        command_todo_complete(id: $id) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
+      }
+    `,
+    });
+
+    commandTodoReopen = mutation({
+      query: `
+      mutation CommandTodoReopen($id: String!) {
+        command_todo_reopen(id: $id) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
+      }
+    `,
+    });
+
+    commandTodoRemove = mutation({
+      query: `
+      mutation CommandTodoRemove($id: String!) {
+        command_todo_remove(id: $id) {
+          id
+        }
+      }
+    `,
+    });
+  };
+
   const optimisticCommandTodoInitialize = async (event) => {
     let optimisticTodos = [...todos];
     optimisticTodos.push({
@@ -237,21 +297,6 @@
     event.srcElement[0].focus();
   };
 
-  const commandTodoComplete = mutation({
-    query: `
-    mutation CommandCompleteTodo($id: String!) {
-      command_todo_complete(id: $id) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
-      }
-    }
-  `,
-  });
-
   const optimisticCommandTodoComplete = (todo) => {
     let optimisticTodos = [...todos];
     let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
@@ -262,20 +307,6 @@
     });
   };
 
-  const commandTodoReopen = mutation({
-    query: `
-    mutation CommandTodoReopen($id: String!) {
-      command_todo_reopen(id: $id) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
-      }
-    }
-  `,
-  });
   const optimisticCommandTodoReopen = (todo) => {
     let optimisticTodos = [...todos];
     let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
@@ -286,15 +317,6 @@
     });
   };
 
-  const commandTodoRemove = mutation({
-    query: `
-    mutation CommandTodoRemove($id: String!) {
-      command_todo_remove(id: $id) {
-        id
-      }
-    }
-  `,
-  });
   const optimisticCommandTodoRemove = (todo) => {
     let optimisticTodos = [...todos];
     optimisticTodos.splice(
@@ -307,6 +329,10 @@
       id: todo.id,
     });
   };
+
+  if (browser) {
+    startGQLClient();
+  }
 </script>
 
 <ProtectedRoute>
