@@ -6,16 +6,9 @@ import {
   cacheExchange,
   fetchExchange,
 } from "@urql/svelte";
-import { makeOperation } from "@urql/core";
-import { authExchange } from "@urql/exchange-auth";
-import {
-  tokenRefresh,
-  accessToken,
-  refreshToken,
-} from "../web3auth/Web3Auth.svelte";
+import { accessToken } from "../web3auth/Web3Auth.svelte";
 import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
-import { isTokenExpired } from "../web3auth/jwt";
 import debug from "debug";
 import { get } from "svelte/store";
 

@@ -21,8 +21,6 @@
 
   let graphqlClientInstance;
   const log = debug("sveltekit-web3auth:routes/todos/index");
-  const issuer = config.web3auth.issuer;
-  const clientId = config.web3auth.clientId;
 
   export const queryToObject = (params) => {
     // parse query string
