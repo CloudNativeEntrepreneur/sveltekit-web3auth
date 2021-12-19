@@ -24,7 +24,7 @@ export function isTokenExpired(jwt: string): boolean {
   const expirationTime = data?.exp || 0 - tokenTimeSkew;
   const timeRemaining = expirationTime - now;
   const isExpired = now > expirationTime;
-  // console.log("isTokenExpired", {
+  // log("isTokenExpired", {
   //   now,
   //   expirationTime,
   //   isExpired,

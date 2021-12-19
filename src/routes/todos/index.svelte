@@ -19,7 +19,10 @@
   import Todo from "../../components/todos/Todo.svelte";
   import { getContext } from "svelte";
   import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "$lib/web3auth/Web3Auth.svelte";
+  import debug from 'debug'
 
+  let graphqlClientInstance
+  const log = debug('sveltekit-web3auth:routes/todos/index')
   const issuer = config.web3auth.issuer;
   const clientId = config.web3auth.clientId;
 
@@ -119,7 +122,7 @@
   `;
 
   export async function load({ page, session, fetch }) {
-    // const userAddress = session?.user?.address
+    const userAddress = session?.user?.address
     const variables = {
       limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
       order: page.query.get("order") || "asc",
@@ -138,19 +141,25 @@
       issuer,
     }));
 
-    let serverGQLClient = await graphQLClient(
+    graphqlClientInstance = await graphQLClient({
+      id: `${userAddress}`,
       session,
-      config.graphql,
+      graphql: config.graphql,
       fetch,
       ws,
       stws,
       web3authPromise
-    );
+    });
 
-    const result = await serverGQLClient.query(QUERY, variables).toPromise();
+    log('got gql client instance', graphqlClientInstance)
+
+    const result = await graphqlClientInstance.query(QUERY, variables).toPromise();
     const { data } = result;
+
     if (data) {
       const { todos } = data;
+
+      log('got todos', todos)
 
       return {
         props: {
@@ -167,22 +176,27 @@
 <script>
   export let todos;
   export let count;
+
+  log('TODOS SCRIPT')
+
   const limit = createQueryStore("limit");
   const order = createQueryStore("order");
   const offset = createQueryStore("offset");
 
+  
   const handleTodosSubscription = (previousTodos = [], data) => {
     todos = data.todos;
     return [...data.todos];
   };
-
+  
   const handleTodosCountSubscription = (previousCount, data) => {
     count = data.todos_aggregate.aggregate.count;
     return count;
   };
-
-  const startSubscriptions = (browserGQLClient) => {
-    setClient(browserGQLClient);
+  
+  const startSubscriptions = () => {
+    log('starting subscription')
+    setClient(graphqlClientInstance);
 
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {
       limit: get(limit) || defaults.limit,
@@ -196,16 +210,7 @@
     subscription(todosCountSubscription, handleTodosCountSubscription);
   };
   if (browser) {
-    const web3authPromise = getContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE);
-    const browserGQLClient = graphQLClient(
-      $session,
-      config.graphql,
-      window.fetch,
-      ws,
-      stws,
-      web3authPromise
-    );
-    startSubscriptions(browserGQLClient);
+    startSubscriptions();
   }
 
   const commandTodoInitialize = mutation({

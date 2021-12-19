@@ -11,6 +11,9 @@
   import { handleAuthenticate, handleSignup } from "./routes-api";
   import { handleSignMessage } from "./metamask";
   import { getTokenData } from "./jwt";
+  import debug from 'debug'
+
+  const log = debug('sveltekit-web3auth:lib/web3auth/Web3Auth.svelte')
 
   let web3;
 
@@ -43,7 +46,7 @@
     idToken: string;
     refreshToken: string;
   }) => {
-    // console.log("onReceivedNewTokens", tokens);
+    log("onReceivedNewTokens", tokens);
     const user = getTokenData(tokens.idToken);
     delete user.aud;
     delete user.exp;
@@ -67,6 +70,8 @@
       user,
       authServerOnline: true,
     });
+
+    log('session updated')
 
     return user;
   };
@@ -181,7 +186,7 @@
   };
 
   const clearAuthStoreInfo = () => {
-    // console.log("clearing auth store", {
+    // log("clearing auth store", {
     //   isAuthenticated: get(isAuthenticated),
     //   accessToken: get(accessToken),
     //   refreshToken: get(refreshToken),
@@ -229,7 +234,7 @@
       clearAuthStoreInfo();
       await metaMaskLogin({ clientId });
     } else if (session?.error) {
-      console.log("There is an error in the session", session?.error);
+      log("There is an error in the session", session?.error);
       AuthStore.authError.set(session.error);
       AuthStore.isLoading.set(false);
       clearAuthStoreInfo();
@@ -273,10 +278,10 @@
     }
 
     if (postLogoutRedirectURI) {
-      console.log("post_logout_redirect", postLogoutRedirectURI);
+      log("post_logout_redirect", postLogoutRedirectURI);
       window.location.assign(postLogoutRedirectURI);
     } else {
-      console.log("no post logout redirect configured");
+      log("no post logout redirect configured");
     }
   }
 
@@ -285,7 +290,7 @@
     refreshTokenToExchange,
     requester?: string
   ) => {
-    // console.log(`attempting token refresh for "${requester}"`);
+    log(`attempting token refresh for "${requester}"`);
     const web3authContextClientFn = await web3authPromise;
     const { clientId } = web3authContextClientFn();
     try {
@@ -366,7 +371,7 @@
       currentSilentRefreshTimeout = setTimeout(async () => {
         await silentRefresh(refreshToken);
       }, timeoutDuration);
-      // console.log(
+      // log(
       //   `scheduled another silent refresh in ${
       //     timeoutDuration / 1000
       //   } seconds.`,
@@ -462,10 +467,10 @@
 
     AuthStore.isLoading.set(false);
     if (!$session.user) {
-      // console.log("mounted without user in session", { session: $session });
+      // log("mounted without user in session", { session: $session });
       clearAuthStoreInfo();
     } else {
-      // console.log("mounted with user in session", { session: $session });
+      // log("mounted with user in session", { session: $session });
       setAuthStoreInfoFromSession($session);
 
       const accessToken = $session.accessToken;
