@@ -19,10 +19,10 @@
   import Todo from "../../components/todos/Todo.svelte";
   import { getContext } from "svelte";
   import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "$lib/web3auth/Web3Auth.svelte";
-  import debug from 'debug'
+  import debug from "debug";
 
-  let graphqlClientInstance
-  const log = debug('sveltekit-web3auth:routes/todos/index')
+  let graphqlClientInstance;
+  const log = debug("sveltekit-web3auth:routes/todos/index");
   const issuer = config.web3auth.issuer;
   const clientId = config.web3auth.clientId;
 
@@ -122,7 +122,7 @@
   `;
 
   export async function load({ page, session, fetch }) {
-    const userAddress = session?.user?.address
+    const userAddress = session?.user?.address;
     const variables = {
       limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
       order: page.query.get("order") || "asc",
@@ -148,18 +148,20 @@
       fetch,
       ws,
       stws,
-      web3authPromise
+      web3authPromise,
     });
 
-    log('got gql client instance', graphqlClientInstance)
+    log("got gql client instance", graphqlClientInstance);
 
-    const result = await graphqlClientInstance.query(QUERY, variables).toPromise();
+    const result = await graphqlClientInstance
+      .query(QUERY, variables)
+      .toPromise();
     const { data } = result;
 
     if (data) {
       const { todos } = data;
 
-      log('got todos', todos)
+      log("got todos", todos);
 
       return {
         props: {
@@ -177,25 +179,26 @@
   export let todos;
   export let count;
 
-  log('TODOS SCRIPT')
+  log("TODOS SCRIPT");
 
   const limit = createQueryStore("limit");
   const order = createQueryStore("order");
   const offset = createQueryStore("offset");
 
-  
   const handleTodosSubscription = (previousTodos = [], data) => {
+    log('new todos subscription data')
     todos = data.todos;
     return [...data.todos];
   };
-  
+
   const handleTodosCountSubscription = (previousCount, data) => {
+    log('new todos count subscription data')
     count = data.todos_aggregate.aggregate.count;
     return count;
   };
-  
+
   const startSubscriptions = () => {
-    log('starting subscription')
+    log("starting subscription");
     setClient(graphqlClientInstance);
 
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {

@@ -15,9 +15,9 @@ import {
   setRequestLocalsFromNewTokens,
 } from "./server-utils";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
-import debug from 'debug'
+import debug from "debug";
 
-const log = debug('sveltekit-web3auth:lib/web3auth/hooks')
+const log = debug("sveltekit-web3auth:lib/web3auth/hooks");
 
 // This function is recursive - if a user does not have an access token, but a refresh token
 // it attempts to refresh the access token, and calls itself again recursively, this time
@@ -36,9 +36,7 @@ export const getUserSession: GetUserSessionFn = async (
       request.locals?.user &&
       request.locals?.userid
     ) {
-      log(
-        "has valid access token and user information set - returning"
-      );
+      log("has valid access token and user information set - returning");
       return {
         user: { ...request.locals.user },
         accessToken: request.locals.accessToken,
@@ -74,10 +72,7 @@ export const getUserSession: GetUserSessionFn = async (
           request.locals?.refreshToken &&
           request.locals?.retries < refreshTokenMaxRetries
         ) {
-          log(
-            "attempting to exchange refresh token",
-            request.locals?.retries
-          );
+          log("attempting to exchange refresh token", request.locals?.retries);
           const tokenSet = await renewWeb3AuthToken(
             request.locals.refreshToken,
             issuer,

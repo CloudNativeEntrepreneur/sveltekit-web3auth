@@ -11,9 +11,9 @@
   import { handleAuthenticate, handleSignup } from "./routes-api";
   import { handleSignMessage } from "./metamask";
   import { getTokenData } from "./jwt";
-  import debug from 'debug'
+  import debug from "debug";
 
-  const log = debug('sveltekit-web3auth:lib/web3auth/Web3Auth.svelte')
+  const log = debug("sveltekit-web3auth:lib/web3auth/Web3Auth.svelte");
 
   let web3;
 
@@ -71,7 +71,7 @@
       authServerOnline: true,
     });
 
-    log('session updated')
+    log("session updated");
 
     return user;
   };

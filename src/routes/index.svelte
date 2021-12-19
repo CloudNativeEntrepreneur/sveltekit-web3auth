@@ -12,9 +12,9 @@
     LogoutButton,
     RefreshTokenButton,
   } from "$lib";
-  import debug from 'debug'
+  import debug from "debug";
 
-  const log = debug('sveltekit-web3auth:routes/index')
+  const log = debug("sveltekit-web3auth:routes/index");
 
   let accessTokenElement;
   let isAccessTokenCopied = false;

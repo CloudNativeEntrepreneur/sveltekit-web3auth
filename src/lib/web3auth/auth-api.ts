@@ -1,7 +1,7 @@
 import type { Web3AuthResponse } from "../types";
-import debug from 'debug'
+import debug from "debug";
 
-const log = debug('sveltekit-web3auth:lib/web3auth/auth-api')
+const log = debug("sveltekit-web3auth:lib/web3auth/auth-api");
 
 // Auth Server API Calls
 

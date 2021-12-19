@@ -7,9 +7,9 @@ import {
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 import { config } from "./config";
-import debug from 'debug'
+import debug from "debug";
 
-const log = debug('sveltekit-web3auth:hooks')
+const log = debug("sveltekit-web3auth:hooks");
 
 const issuer = config.web3auth.issuer;
 const clientId = config.web3auth.clientId;
