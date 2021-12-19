@@ -40,7 +40,7 @@ export const graphQLClient = (options: {
   const sessionAccessToken = session.accessToken;
   const sessionRefreshToken = session.refreshToken;
 
-  let currentTokenSet = {
+  const currentTokenSet = {
     accessToken: sessionAccessToken,
     refreshToken: sessionRefreshToken,
   };
@@ -49,7 +49,7 @@ export const graphQLClient = (options: {
   if (currentTokenSet.accessToken) {
     authHeaders.Authorization = `Bearer ${currentTokenSet.accessToken}`;
   }
-  let fetchOptions = {
+  const fetchOptions = {
     headers: {
       ...authHeaders,
     },
@@ -78,12 +78,12 @@ export const graphQLClient = (options: {
       connectionParams: (params) => {
         log("getting subscription connections params", params);
 
-        let currentAccessToken = get(accessToken);
+        const currentAccessToken = get(accessToken);
         const authHeaders: any = {};
         if (currentAccessToken) {
           authHeaders.Authorization = `Bearer ${currentAccessToken}`;
         }
-        let fetchOptions = {
+        const fetchOptions = {
           headers: {
             ...authHeaders,
           },
