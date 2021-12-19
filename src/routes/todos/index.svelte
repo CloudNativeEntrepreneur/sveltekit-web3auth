@@ -186,13 +186,13 @@
   const offset = createQueryStore("offset");
 
   const handleTodosSubscription = (previousTodos = [], data) => {
-    log('new todos subscription data')
+    log("new todos subscription data");
     todos = data.todos;
     return [...data.todos];
   };
 
   const handleTodosCountSubscription = (previousCount, data) => {
-    log('new todos count subscription data')
+    log("new todos count subscription data");
     count = data.todos_aggregate.aggregate.count;
     return count;
   };
