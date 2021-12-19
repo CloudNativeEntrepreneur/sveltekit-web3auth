@@ -24,16 +24,16 @@ const log = debug("sveltekit-web3auth:lib/graphQL/urql");
 const graphQLClients = [];
 
 export const graphQLClient = (options: {
-  id,
-  session,
+  id;
+  session;
   graphql: {
     ws: string;
     http: string;
     httpInternal?: string;
-  },
-  fetch,
-  ws,
-  stws
+  };
+  fetch;
+  ws;
+  stws;
 }) => {
   const { id, session, graphql, fetch, ws, stws } = options;
 
@@ -70,7 +70,6 @@ export const graphQLClient = (options: {
   }
 
   log("new gql client", { isServerSide, id });
-
 
   const subscriptionClient = new stws.SubscriptionClient(
     graphql.ws,
