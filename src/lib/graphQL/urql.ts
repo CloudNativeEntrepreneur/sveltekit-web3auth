@@ -11,6 +11,7 @@ import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
 import debug from "debug";
 import { get } from "svelte/store";
+import { createClient as createGQLClient} from "graphql-ws";
 
 const log = debug("sveltekit-web3auth:lib/graphQL/urql");
 
@@ -59,11 +60,9 @@ export const graphQLClient = (options: {
     return existingClient;
   }
 
-  const subscriptionClient = new stws.SubscriptionClient(
-    graphql.ws,
-    {
-      reconnect: true,
-      connectionParams: () => {
+  const subscriptionClient = createGQLClient({
+    url: graphql.ws,
+    connectionParams: () => {
         const currentAccessToken =
           get(accessToken) || currentTokenSet.accessToken;
         const authHeaders: any = {};
@@ -77,8 +76,8 @@ export const graphQLClient = (options: {
         };
         return fetchOptions;
       },
-    },
-    isServerSide ? ws : WebSocket
+    webSocketImpl: isServerSide ? ws : WebSocket
+    }
   );
 
   const ssr = ssrExchange({
@@ -102,9 +101,15 @@ export const graphQLClient = (options: {
     fetchExchange,
     subscriptionExchange({
       forwardSubscription(operation) {
-        log("forwarding subscription", operation, subscriptionClient);
-        return subscriptionClient.request(operation);
-      },
+        return {
+          subscribe: (sink) => {
+            const dispose = subscriptionClient.subscribe(operation, sink);
+            return {
+              unsubscribe: dispose,
+            };
+          },
+        };
+      }
     }),
   ];
 

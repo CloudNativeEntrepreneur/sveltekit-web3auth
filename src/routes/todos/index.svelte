@@ -10,7 +10,6 @@
   // which wouldn't work... so plain old relative import gets the job done.
   import { config } from "../../config/index";
   import ws from "ws";
-  import * as stws from "subscriptions-transport-ws";
   import { ProtectedRoute } from "$lib";
   import { session, page } from "$app/stores";
   import { browser } from "$app/env";
@@ -136,7 +135,7 @@
       graphql: config.graphql,
       fetch,
       ws,
-      stws,
+      stws: null,
     });
 
     const result = await graphqlClientInstance
@@ -197,7 +196,7 @@
         graphql: config.graphql,
         fetch: fetch || window.fetch,
         ws,
-        stws,
+        stws: null,
       });
       setClient(graphqlClientInstance);
     }

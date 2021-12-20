@@ -25,6 +25,7 @@
     "eslint": "8.5.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-svelte3": "3.2.1",
+    "graphql-ws": "^5.5.5",
     "jwt-decode": "3.1.2",
     "postcss": "8.4.5",
     "postcss-import": "14.0.2",
