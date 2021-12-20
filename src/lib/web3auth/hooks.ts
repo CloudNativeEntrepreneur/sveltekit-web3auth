@@ -15,6 +15,9 @@ import {
   setRequestLocalsFromNewTokens,
 } from "./server-utils";
 import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
+import debug from "debug";
+
+const log = debug("sveltekit-web3auth:lib/web3auth/hooks");
 
 // This function is recursive - if a user does not have an access token, but a refresh token
 // it attempts to refresh the access token, and calls itself again recursively, this time
@@ -33,9 +36,7 @@ export const getUserSession: GetUserSessionFn = async (
       request.locals?.user &&
       request.locals?.userid
     ) {
-      console.log(
-        "has valid access token and user information set - returning"
-      );
+      log("has valid access token and user information set - returning");
       return {
         user: { ...request.locals.user },
         accessToken: request.locals.accessToken,
@@ -44,7 +45,7 @@ export const getUserSession: GetUserSessionFn = async (
         authServerOnline: true,
       };
     } else {
-      console.log("get user session - no access token present");
+      log("get user session - no access token present");
 
       // Check auth server is ready
       try {
@@ -71,10 +72,7 @@ export const getUserSession: GetUserSessionFn = async (
           request.locals?.refreshToken &&
           request.locals?.retries < refreshTokenMaxRetries
         ) {
-          console.log(
-            "attempting to exchange refresh token",
-            request.locals?.retries
-          );
+          log("attempting to exchange refresh token", request.locals?.retries);
           const tokenSet = await renewWeb3AuthToken(
             request.locals.refreshToken,
             issuer,
@@ -107,7 +105,7 @@ export const getUserSession: GetUserSessionFn = async (
         };
       }
 
-      console.log("no refresh token, or max retries reached");
+      log("no refresh token, or max retries reached");
       // no access token or refresh token
       throw {
         error: "missing_jwt",
@@ -115,7 +113,7 @@ export const getUserSession: GetUserSessionFn = async (
       };
     }
   } catch (err) {
-    console.log("returning without user info");
+    log("returning without user info");
     request.locals.accessToken = "";
     request.locals.refreshToken = "";
     request.locals.userid = "";

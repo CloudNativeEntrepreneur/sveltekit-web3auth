@@ -6,65 +6,77 @@ import {
   cacheExchange,
   fetchExchange,
 } from "@urql/svelte";
-import { makeOperation } from "@urql/core";
-import { authExchange } from "@urql/exchange-auth";
-import { tokenRefresh } from "../web3auth/Web3Auth.svelte";
+import { accessToken } from "../web3auth/Web3Auth.svelte";
 import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
-import { isTokenExpired } from "../web3auth/jwt";
+import debug from "debug";
+import { get } from "svelte/store";
 
-export const graphQLClient = (
-  session,
-  graphQLConfig: {
+const log = debug("sveltekit-web3auth:lib/graphQL/urql");
+
+const graphQLClients = [];
+
+export const graphQLClient = (options: {
+  id;
+  session;
+  graphql: {
     ws: string;
     http: string;
     httpInternal?: string;
-  },
-  fetch,
-  ws,
-  stws,
-  web3authPromise
-) => {
-  // console.log("new gql client");
-  const isServerSide = !browser;
+  };
+  fetch;
+  ws;
+  stws;
+}) => {
+  const { id, session, graphql, fetch, ws, stws } = options;
 
-  const fetchOptions = async () => {
-    const accessToken = session.accessToken;
-    const refreshToken = session.refreshToken;
+  const sessionAccessToken = session.accessToken;
+  const sessionRefreshToken = session.refreshToken;
 
-    let currentTokenSet = {
-      accessToken,
-      refreshToken,
-    };
-
-    if (!!currentTokenSet.accessToken && !!currentTokenSet.refreshToken) {
-      if (isTokenExpired(currentTokenSet.accessToken)) {
-        currentTokenSet = await tokenRefresh(
-          web3authPromise,
-          currentTokenSet.refreshToken,
-          `urql ${isServerSide ? "server" : "browser"} client - fetchOptions`
-        );
-      }
-    }
-
-    const authHeaders: any = {};
-
-    if (currentTokenSet.accessToken) {
-      authHeaders.authorization = `Bearer ${currentTokenSet.accessToken}`;
-    }
-
-    return {
-      headers: {
-        ...authHeaders,
-      },
-    };
+  const currentTokenSet = {
+    accessToken: sessionAccessToken,
+    refreshToken: sessionRefreshToken,
   };
 
+  const authHeaders: any = {};
+  if (currentTokenSet.accessToken) {
+    authHeaders.Authorization = `Bearer ${currentTokenSet.accessToken}`;
+  }
+  const fetchOptions = {
+    headers: {
+      ...authHeaders,
+    },
+  };
+
+  const existingClient = graphQLClients.find((c) => c.id === id);
+  const isServerSide = !browser;
+  if (existingClient) {
+    log("found existing client", {
+      isServerSide,
+      existingClient,
+    });
+    existingClient.fetchOptions = fetchOptions;
+    return existingClient;
+  }
+
   const subscriptionClient = new stws.SubscriptionClient(
-    graphQLConfig.ws,
+    graphql.ws,
     {
       reconnect: true,
-      connectionParams: fetchOptions,
+      connectionParams: () => {
+        const currentAccessToken =
+          get(accessToken) || currentTokenSet.accessToken;
+        const authHeaders: any = {};
+        if (currentAccessToken) {
+          authHeaders.Authorization = `Bearer ${currentAccessToken}`;
+        }
+        const fetchOptions = {
+          headers: {
+            ...authHeaders,
+          },
+        };
+        return fetchOptions;
+      },
     },
     isServerSide ? ws : WebSocket
   );
@@ -74,107 +86,53 @@ export const graphQLClient = (
     initialState: !isServerSide ? (window as any).__URQL_DATA__ : undefined,
   });
 
-  const clientConfig = {
-    url: isServerSide
-      ? graphQLConfig.httpInternal || graphQLConfig.http
-      : graphQLConfig.http,
+  const serverExchanges = [
+    devtoolsExchange,
+    dedupExchange,
+    cacheExchange,
+    ssr,
+    fetchExchange,
+  ];
+
+  const clientExchanges = [
+    devtoolsExchange,
+    dedupExchange,
+    cacheExchange,
+    ssr,
+    fetchExchange,
+    subscriptionExchange({
+      forwardSubscription(operation) {
+        log("forwarding subscription", operation, subscriptionClient);
+        return subscriptionClient.request(operation);
+      },
+    }),
+  ];
+
+  const serverConfig = {
+    url: graphql.httpInternal || graphql.http,
     preferGetMethod: false,
     fetch,
-    exchanges: [
-      devtoolsExchange,
-      dedupExchange,
-      cacheExchange,
-      authExchange({
-        addAuthToOperation: (options: { authState: any; operation: any }) => {
-          const { authState, operation } = options;
+    fetchOptions,
+    exchanges: serverExchanges,
+  };
 
-          if (!authState || !authState.accessToken) {
-            return operation;
-          }
-          // fetchOptions can be a function (See Client API) but you can simplify this based on usage
-          const fetchOptions =
-            typeof operation.context.fetchOptions === "function"
-              ? operation.context.fetchOptions()
-              : operation.context.fetchOptions || {};
-
-          const authHeaders: any = {};
-
-          if (authState.accessToken) {
-            authHeaders.authorization = `Bearer ${authState.accessToken}`;
-          }
-
-          const newOperation = makeOperation(operation.kind, operation, {
-            ...operation.context,
-            fetchOptions: {
-              ...fetchOptions,
-              headers: {
-                ...fetchOptions.headers,
-                ...authHeaders,
-              },
-            },
-          });
-
-          return newOperation;
-        },
-        getAuth: async (options: { authState: any }) => {
-          const { authState } = options;
-          const accessToken = session.accessToken;
-          const refreshToken = session.refreshToken;
-
-          const currentTokenSet = {
-            accessToken,
-            refreshToken,
-          };
-
-          if (!!currentTokenSet.accessToken && !!currentTokenSet.refreshToken) {
-            if (isTokenExpired(currentTokenSet.accessToken)) {
-              return await tokenRefresh(
-                web3authPromise,
-                currentTokenSet.refreshToken,
-                `urql ${isServerSide ? "server" : "browser"} client - getAuth`
-              );
-            } else {
-              return currentTokenSet;
-            }
-          } else {
-            return null;
-          }
-        },
-        willAuthError: ({ authState }) => {
-          if (
-            !authState?.accessToken ||
-            isTokenExpired(authState?.accessToken)
-          ) {
-            return true;
-          }
-          return false;
-        },
-        didAuthError: ({ error }) => {
-          if (error?.networkError && error.message.includes("JWTExpired"))
-            return true;
-          const hasGQLAuthErrors = error.graphQLErrors?.some(
-            (e) => e.extensions?.code === "FORBIDDEN"
-          );
-
-          if (hasGQLAuthErrors) return true;
-
-          return false;
-        },
-      }),
-      ssr,
-      fetchExchange,
-      subscriptionExchange({
-        forwardSubscription(operation) {
-          return subscriptionClient.request(operation);
-        },
-      }),
-    ],
+  const clientConfig = {
+    url: graphql.http,
+    preferGetMethod: false,
+    fetch,
+    fetchOptions,
+    exchanges: clientExchanges,
     requestPolicy: "cache-and-network",
   };
 
-  const urqlConfig = Object.assign({}, clientConfig, {
-    fetchOptions,
-  });
+  const client = isServerSide
+    ? createClient(serverConfig)
+    : createClient(clientConfig as any);
 
-  return createClient(urqlConfig as any);
+  Object.assign(client, { id });
+  log("created client", { isServerSide, id });
+
+  graphQLClients.push(client);
+
+  return client;
 };

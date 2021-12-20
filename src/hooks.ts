@@ -7,6 +7,9 @@ import {
 import type { Locals } from "$lib/types";
 import type { ServerRequest } from "@sveltejs/kit/types/hooks";
 import { config } from "./config";
+import debug from "debug";
+
+const log = debug("sveltekit-web3auth:hooks");
 
 const issuer = config.web3auth.issuer;
 const clientId = config.web3auth.clientId;
@@ -17,7 +20,7 @@ const refreshTokenMaxRetries = config.web3auth.refreshTokenMaxRetries;
 
 // https://kit.svelte.dev/docs#hooks-handle
 export const handle: Handle<Locals> = async ({ request, resolve }) => {
-  console.log("handle", request.path);
+  log("handle", request.path);
 
   // Initialization part
   const userGen = userDetailsGenerator(request);
@@ -55,7 +58,7 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
-  console.log("getSession", request.locals?.user);
+  log("getSession", request.locals?.user);
   const userSession = await getUserSession(
     request,
     issuer,

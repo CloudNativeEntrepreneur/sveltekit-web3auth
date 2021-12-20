@@ -4,17 +4,17 @@
   export let optimisticCommandTodoReopen;
   export let optimisticCommandTodoRemove;
 
-  const completeTodo = async (event) => {
+  const completeTodo = async () => {
     await optimisticCommandTodoComplete(todo);
   };
 
-  const reopenTodo = async (event) => {
+  const reopenTodo = async () => {
     await optimisticCommandTodoReopen({
       id: todo.id,
     });
   };
 
-  const removeTodo = async (event) => {
+  const removeTodo = async () => {
     await optimisticCommandTodoRemove({
       id: todo.id,
     });

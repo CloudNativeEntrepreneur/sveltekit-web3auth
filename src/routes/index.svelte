@@ -12,6 +12,9 @@
     LogoutButton,
     RefreshTokenButton,
   } from "$lib";
+  import debug from "debug";
+
+  const log = debug("sveltekit-web3auth:routes/index");
 
   let accessTokenElement;
   let isAccessTokenCopied = false;
@@ -30,7 +33,7 @@
           isAccessTokenCopied = false;
         }, 1000);
       } catch (e) {
-        console.log(accessTokenElement);
+        log(accessTokenElement);
         console.error(e);
       }
     }

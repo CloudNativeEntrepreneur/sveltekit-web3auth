@@ -17,11 +17,8 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
   import Todo from "../../components/todos/Todo.svelte";
-  import { getContext } from "svelte";
-  import { WEB3AUTH_CONTEXT_CLIENT_PROMISE } from "$lib/web3auth/Web3Auth.svelte";
 
-  const issuer = config.web3auth.issuer;
-  const clientId = config.web3auth.clientId;
+  let graphqlClientInstance;
 
   export const queryToObject = (params) => {
     // parse query string
@@ -119,7 +116,7 @@
   `;
 
   export async function load({ page, session, fetch }) {
-    // const userAddress = session?.user?.address
+    const userAddress = session?.user?.address;
     const variables = {
       limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
       order: page.query.get("order") || "asc",
@@ -133,25 +130,22 @@
       },
     };
 
-    const web3authPromise = Promise.resolve(() => ({
-      clientId,
-      issuer,
-    }));
-
-    let serverGQLClient = await graphQLClient(
+    graphqlClientInstance = await graphQLClient({
+      id: `${userAddress}`,
       session,
-      config.graphql,
+      graphql: config.graphql,
       fetch,
       ws,
       stws,
-      web3authPromise
-    );
+    });
 
-    const result = await serverGQLClient.query(QUERY, variables).toPromise();
+    const result = await graphqlClientInstance
+      .query(QUERY, variables)
+      .toPromise();
     const { data } = result;
+
     if (data) {
       const { todos } = data;
-
       return {
         props: {
           todos,
@@ -165,11 +159,23 @@
 </script>
 
 <script>
+  if (graphqlClientInstance) {
+    setClient(graphqlClientInstance);
+  }
   export let todos;
   export let count;
+
   const limit = createQueryStore("limit");
   const order = createQueryStore("order");
   const offset = createQueryStore("offset");
+
+  let newTodo;
+
+  // commands
+  let commandTodoInitialize;
+  let commandTodoComplete;
+  let commandTodoReopen;
+  let commandTodoRemove;
 
   const handleTodosSubscription = (previousTodos = [], data) => {
     todos = data.todos;
@@ -181,8 +187,20 @@
     return count;
   };
 
-  const startSubscriptions = (browserGQLClient) => {
-    setClient(browserGQLClient);
+  const startGQLClient = async () => {
+    if (graphqlClientInstance) {
+      setClient(graphqlClientInstance);
+    } else {
+      graphqlClientInstance = await graphQLClient({
+        id: $session?.user?.address,
+        session: $session,
+        graphql: config.graphql,
+        fetch: fetch || window.fetch,
+        ws,
+        stws,
+      });
+      setClient(graphqlClientInstance);
+    }
 
     const todosSubscription = operationStore(TODOS_SUBSCRIPTION, {
       limit: get(limit) || defaults.limit,
@@ -194,35 +212,64 @@
 
     subscription(todosSubscription, handleTodosSubscription);
     subscription(todosCountSubscription, handleTodosCountSubscription);
-  };
-  if (browser) {
-    const web3authPromise = getContext(WEB3AUTH_CONTEXT_CLIENT_PROMISE);
-    const browserGQLClient = graphQLClient(
-      $session,
-      config.graphql,
-      window.fetch,
-      ws,
-      stws,
-      web3authPromise
-    );
-    startSubscriptions(browserGQLClient);
-  }
 
-  const commandTodoInitialize = mutation({
-    query: `
-    mutation CommandInitializeTodo($todo: String!) {
-      command_todo_initialize(todo: $todo) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
+    // mutations
+    commandTodoInitialize = mutation({
+      query: `
+      mutation CommandInitializeTodo($todo: String!) {
+        command_todo_initialize(todo: $todo) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
       }
-    }
-  `,
-  });
-  let newTodo;
+    `,
+    });
+
+    commandTodoComplete = mutation({
+      query: `
+      mutation CommandCompleteTodo($id: String!) {
+        command_todo_complete(id: $id) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
+      }
+    `,
+    });
+
+    commandTodoReopen = mutation({
+      query: `
+      mutation CommandTodoReopen($id: String!) {
+        command_todo_reopen(id: $id) {
+          address
+          completed
+          createdAt
+          id
+          todo
+          completedAt
+        }
+      }
+    `,
+    });
+
+    commandTodoRemove = mutation({
+      query: `
+      mutation CommandTodoRemove($id: String!) {
+        command_todo_remove(id: $id) {
+          id
+        }
+      }
+    `,
+    });
+  };
+
   const optimisticCommandTodoInitialize = async (event) => {
     let optimisticTodos = [...todos];
     optimisticTodos.push({
@@ -239,21 +286,6 @@
     event.srcElement[0].focus();
   };
 
-  const commandTodoComplete = mutation({
-    query: `
-    mutation CommandCompleteTodo($id: String!) {
-      command_todo_complete(id: $id) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
-      }
-    }
-  `,
-  });
-
   const optimisticCommandTodoComplete = (todo) => {
     let optimisticTodos = [...todos];
     let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
@@ -264,20 +296,6 @@
     });
   };
 
-  const commandTodoReopen = mutation({
-    query: `
-    mutation CommandTodoReopen($id: String!) {
-      command_todo_reopen(id: $id) {
-        address
-        completed
-        createdAt
-        id
-        todo
-        completedAt
-      }
-    }
-  `,
-  });
   const optimisticCommandTodoReopen = (todo) => {
     let optimisticTodos = [...todos];
     let optimisticTodo = optimisticTodos.find((t) => t.id === todo.id);
@@ -288,15 +306,6 @@
     });
   };
 
-  const commandTodoRemove = mutation({
-    query: `
-    mutation CommandTodoRemove($id: String!) {
-      command_todo_remove(id: $id) {
-        id
-      }
-    }
-  `,
-  });
   const optimisticCommandTodoRemove = (todo) => {
     let optimisticTodos = [...todos];
     optimisticTodos.splice(
@@ -309,6 +318,10 @@
       id: todo.id,
     });
   };
+
+  if (browser) {
+    startGQLClient();
+  }
 </script>
 
 <ProtectedRoute>

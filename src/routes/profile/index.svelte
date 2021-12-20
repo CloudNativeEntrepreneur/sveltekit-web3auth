@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { session, page } from "$app/stores";
+  import { session } from "$app/stores";
   import { ProtectedRoute, LogoutButton } from "$lib";
 </script>
 

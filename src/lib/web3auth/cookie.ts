@@ -8,9 +8,9 @@
 
 // const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 
+// const encode = encodeURIComponent;
 export const parseCookie = (str: string, options?: any) => {
   const decode = decodeURIComponent;
-  const encode = encodeURIComponent;
   const pairSplitRegExp = /; */;
 
   if (typeof str !== "string") {
