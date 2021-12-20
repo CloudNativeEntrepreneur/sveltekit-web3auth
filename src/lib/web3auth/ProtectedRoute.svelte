@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import { session, page } from "$app/stores";
+  import { session } from "$app/stores";
   import { getContext } from "svelte";
   import {
     WEB3AUTH_CONTEXT_CLIENT_PROMISE,

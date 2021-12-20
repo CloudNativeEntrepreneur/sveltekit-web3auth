@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import { setContext } from "svelte";
   import { onMount, onDestroy } from "svelte";
-  import { writable, get } from "svelte/store";
+  import { writable } from "svelte/store";
   import { browser } from "$app/env";
   import { page, session } from "$app/stores";
   import type {

@@ -63,9 +63,7 @@ export const graphQLClient = (options: {
     graphql.ws,
     {
       reconnect: true,
-      connectionParams: (params) => {
-        log("getting subscription connections params", params);
-
+      connectionParams: () => {
         const currentAccessToken =
           get(accessToken) || currentTokenSet.accessToken;
         const authHeaders: any = {};
