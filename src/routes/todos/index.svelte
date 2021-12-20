@@ -138,7 +138,6 @@
       graphql: config.graphql,
       fetch,
       ws,
-      stws: null,
     });
 
     const result = await graphqlClientInstance
@@ -201,7 +200,6 @@
         graphql: config.graphql,
         fetch: fetch || window.fetch,
         ws,
-        stws: null,
       });
       setClient(graphqlClientInstance);
     }
