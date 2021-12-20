@@ -11,10 +11,36 @@ import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
 import debug from "debug";
 import { get } from "svelte/store";
+import { createClient as createGQLClient } from "graphql-ws";
 
 const log = debug("sveltekit-web3auth:lib/graphQL/urql");
 
 const graphQLClients = [];
+
+type AuthHeaders = {
+  Authorization?: string | undefined;
+};
+
+let currentAccessToken;
+const authHeaders: AuthHeaders = {};
+let currentFetchOptions;
+const fetchOptions = () => {
+  return currentFetchOptions;
+};
+let restartRequired = false;
+
+accessToken.subscribe((value) => {
+  currentAccessToken = value;
+  if (currentAccessToken) {
+    authHeaders.Authorization = `Bearer ${currentAccessToken}`;
+  }
+  currentFetchOptions = {
+    headers: {
+      ...authHeaders,
+    },
+  };
+  restartRequired = true;
+});
 
 export const graphQLClient = (options: {
   id;
@@ -26,23 +52,17 @@ export const graphQLClient = (options: {
   };
   fetch;
   ws;
-  stws;
 }) => {
-  const { id, session, graphql, fetch, ws, stws } = options;
+  log("gql client init/restart", { restartRequired });
+  const { id, session, graphql, fetch, ws } = options;
 
-  const sessionAccessToken = session.accessToken;
-  const sessionRefreshToken = session.refreshToken;
-
-  const currentTokenSet = {
-    accessToken: sessionAccessToken,
-    refreshToken: sessionRefreshToken,
-  };
+  const sessionAccessToken = currentAccessToken || session.accessToken;
 
   const authHeaders: any = {};
-  if (currentTokenSet.accessToken) {
-    authHeaders.Authorization = `Bearer ${currentTokenSet.accessToken}`;
+  if (sessionAccessToken) {
+    authHeaders.Authorization = `Bearer ${sessionAccessToken}`;
   }
-  const fetchOptions = {
+  currentFetchOptions = {
     headers: {
       ...authHeaders,
     },
@@ -51,35 +71,38 @@ export const graphQLClient = (options: {
   const existingClient = graphQLClients.find((c) => c.id === id);
   const isServerSide = !browser;
   if (existingClient) {
+    existingClient.fetchOptions = fetchOptions;
     log("found existing client", {
       isServerSide,
       existingClient,
     });
-    existingClient.fetchOptions = fetchOptions;
     return existingClient;
   }
 
-  const subscriptionClient = new stws.SubscriptionClient(
-    graphql.ws,
-    {
-      reconnect: true,
-      connectionParams: () => {
-        const currentAccessToken =
-          get(accessToken) || currentTokenSet.accessToken;
-        const authHeaders: any = {};
-        if (currentAccessToken) {
-          authHeaders.Authorization = `Bearer ${currentAccessToken}`;
-        }
-        const fetchOptions = {
-          headers: {
-            ...authHeaders,
-          },
+  const subscriptionClient = createGQLClient({
+    url: graphql.ws,
+    connectionParams: () => {
+      return fetchOptions();
+    },
+    on: {
+      connected: (socket: any) => {
+        log("socket connected", socket);
+        const gracefullyRestartSubscriptionsClient = () => {
+          if (socket.readyState === WebSocket.OPEN) {
+            log("restart subscription client");
+            socket.close(4205, "Client Restart");
+          }
         };
-        return fetchOptions;
+
+        // just in case you were eager to restart
+        if (restartRequired) {
+          restartRequired = false;
+          gracefullyRestartSubscriptionsClient();
+        }
       },
     },
-    isServerSide ? ws : WebSocket
-  );
+    webSocketImpl: isServerSide ? ws : WebSocket,
+  });
 
   const ssr = ssrExchange({
     isClient: !isServerSide,
@@ -102,8 +125,14 @@ export const graphQLClient = (options: {
     fetchExchange,
     subscriptionExchange({
       forwardSubscription(operation) {
-        log("forwarding subscription", operation, subscriptionClient);
-        return subscriptionClient.request(operation);
+        return {
+          subscribe: (sink) => {
+            const dispose = subscriptionClient.subscribe(operation, sink);
+            return {
+              unsubscribe: dispose,
+            };
+          },
+        };
       },
     }),
   ];
