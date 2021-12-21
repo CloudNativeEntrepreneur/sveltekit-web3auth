@@ -140,16 +140,16 @@ export const graphQLClient = (options: {
   const serverConfig = {
     url: graphql.httpInternal || graphql.http,
     preferGetMethod: false,
-    fetch,
     fetchOptions,
+    fetch,
     exchanges: serverExchanges,
   };
 
   const clientConfig = {
     url: graphql.http,
     preferGetMethod: false,
-    fetch,
     fetchOptions,
+    fetch,
     exchanges: clientExchanges,
     requestPolicy: "cache-and-network",
   };
