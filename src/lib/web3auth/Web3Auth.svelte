@@ -53,7 +53,9 @@
     delete user.iss;
     delete user.sub;
     delete user.typ;
-    user.username = decodeURI(user.username);
+    if (user?.username) {
+      user.username = decodeURI(user.username);
+    }
 
     AuthStore.isAuthenticated.set(true);
     AuthStore.accessToken.set(tokens.accessToken);
