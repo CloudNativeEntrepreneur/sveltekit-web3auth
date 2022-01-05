@@ -58,13 +58,13 @@ export const handle: Handle<Locals> = async ({ request, resolve }) => {
 export const getSession: GetSession = async (
   request: ServerRequest<Locals>
 ) => {
-  log("getSession", request.locals?.user);
   const userSession = await getUserSession(
     request,
     issuer,
     clientId,
     clientSecret,
     refreshTokenMaxRetries
-  );
+    );
+  userSession.user.username = decodeURI(userSession.user.username)  
   return userSession;
 };
