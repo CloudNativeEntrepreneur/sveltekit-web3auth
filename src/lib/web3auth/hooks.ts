@@ -37,8 +37,12 @@ export const getUserSession: GetUserSessionFn = async (
       request.locals?.userid
     ) {
       log("has valid access token and user information set - returning");
+      const userClone = Object.assign({}, request.locals.user);
+      if (userClone?.username) {
+        userClone.username = decodeURI(userClone.username);
+      }
       return {
-        user: { ...request.locals.user },
+        user: userClone,
         accessToken: request.locals.accessToken,
         refreshToken: request.locals.refreshToken,
         userid: request.locals.user.address,

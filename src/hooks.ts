@@ -65,8 +65,5 @@ export const getSession: GetSession = async (
     clientSecret,
     refreshTokenMaxRetries
   );
-  if (userSession?.user?.username) {
-    userSession.user.username = decodeURI(userSession?.user?.username || "");
-  }
   return userSession;
 };
