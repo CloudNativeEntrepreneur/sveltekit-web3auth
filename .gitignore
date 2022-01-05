@@ -117,3 +117,7 @@ dist
 build/
 storybook-static/
 sveltekit-web3auth/
+
+.env.*
+!.env.local
+!.env.production
