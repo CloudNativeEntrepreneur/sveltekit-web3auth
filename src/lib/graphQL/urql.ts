@@ -151,7 +151,7 @@ export const graphQLClient = (options: {
     fetchOptions,
     fetch,
     exchanges: clientExchanges,
-    requestPolicy: "cache-and-network",
+    requestPolicy: isServerSide ? "network-only" : "cache-and-network",
   };
 
   const client = isServerSide
