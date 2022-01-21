@@ -143,6 +143,7 @@ export const graphQLClient = (options: {
     fetchOptions,
     fetch,
     exchanges: serverExchanges,
+    requestPolicy: "network-only",
   };
 
   const clientConfig = {
@@ -151,11 +152,11 @@ export const graphQLClient = (options: {
     fetchOptions,
     fetch,
     exchanges: clientExchanges,
-    requestPolicy: isServerSide ? "network-only" : "cache-and-network",
+    requestPolicy: "cache-and-network",
   };
 
   const client = isServerSide
-    ? createClient(serverConfig)
+    ? createClient(serverConfig as any)
     : createClient(clientConfig as any);
 
   Object.assign(client, { id });
