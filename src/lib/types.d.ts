@@ -1,4 +1,4 @@
-import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
+import type { RequestEvent } from "@sveltejs/kit/types/hooks";
 
 export type AuthError = {
   error: string;
@@ -39,10 +39,10 @@ export type Web3AuthResponse = Web3AuthSuccessResponse &
   Web3AuthFailureResponse;
 
 export interface UserDetailsGeneratorFn {
-  (request: ServerRequest<Locals>): AsyncGenerator<
-    ServerResponse,
-    ServerResponse,
-    ServerRequest<Locals>
+  (request: RequestEvent<Locals>): AsyncGenerator<
+    any,
+    any,
+    RequestEvent<Locals>
   >;
 }
 export interface UserSession {
@@ -52,13 +52,4 @@ export interface UserSession {
   userid: string;
   error?: AuthError | undefined;
   authServerOnline: boolean;
-}
-export interface GetUserSessionFn {
-  (
-    request: ServerRequest<Locals>,
-    issuer: string,
-    clientId: string,
-    clientSecret: string,
-    refreshTokenMaxRetries: number
-  ): Promise<UserSession>;
 }

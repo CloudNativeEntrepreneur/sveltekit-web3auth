@@ -1,8 +1,4 @@
-import type {
-  Locals,
-  UserDetailsGeneratorFn,
-  GetUserSessionFn,
-} from "../types";
+import type { Locals, UserDetailsGeneratorFn } from "../types";
 import { parseCookie } from "./cookie";
 import { isTokenExpired } from "./jwt";
 import { renewWeb3AuthToken } from "./auth-api";
@@ -14,38 +10,39 @@ import {
   populateRequestLocals,
   setRequestLocalsFromNewTokens,
 } from "./server-utils";
-import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
 import debug from "debug";
+import type { RequestEvent } from "@sveltejs/kit";
 
 const log = debug("sveltekit-web3auth:lib/web3auth/hooks");
 
 // This function is recursive - if a user does not have an access token, but a refresh token
 // it attempts to refresh the access token, and calls itself again recursively, this time
 // to go down the path of having the access token
-export const getUserSession: GetUserSessionFn = async (
-  request: ServerRequest<Locals>,
+export const getUserSession = async (
+  event: RequestEvent<Locals>,
   issuer,
   clientId,
   clientSecret,
   refreshTokenMaxRetries
 ) => {
+  const { request } = event;
   try {
     if (
-      request.locals?.accessToken &&
-      !isTokenExpired(request.locals?.accessToken) &&
-      request.locals?.user &&
-      request.locals?.userid
+      event.locals?.accessToken &&
+      !isTokenExpired(event.locals?.accessToken) &&
+      event.locals?.user &&
+      event.locals?.userid
     ) {
       log("has valid access token and user information set - returning");
-      const userClone = Object.assign({}, request.locals.user);
+      const userClone = Object.assign({}, event.locals.user);
       if (userClone?.username) {
         userClone.username = decodeURI(userClone.username);
       }
       return {
         user: userClone,
-        accessToken: request.locals.accessToken,
-        refreshToken: request.locals.refreshToken,
-        userid: request.locals.user.address,
+        accessToken: event.locals.accessToken,
+        refreshToken: event.locals.refreshToken,
+        userid: event.locals.user.address,
         authServerOnline: true,
       };
     } else {
@@ -73,12 +70,12 @@ export const getUserSession: GetUserSessionFn = async (
       // try to refresh
       try {
         if (
-          request.locals?.refreshToken &&
-          request.locals?.retries < refreshTokenMaxRetries
+          event.locals?.refreshToken &&
+          event.locals?.retries < refreshTokenMaxRetries
         ) {
-          log("attempting to exchange refresh token", request.locals?.retries);
+          log("attempting to exchange refresh token", event.locals?.retries);
           const tokenSet = await renewWeb3AuthToken(
-            request.locals.refreshToken,
+            event.locals.refreshToken,
             issuer,
             clientId,
             clientSecret
@@ -91,11 +88,11 @@ export const getUserSession: GetUserSessionFn = async (
             };
           }
 
-          setRequestLocalsFromNewTokens(request, tokenSet);
+          setRequestLocalsFromNewTokens(event, tokenSet);
 
-          request.locals.retries = request.locals.retries + 1;
+          event.locals.retries = event.locals.retries + 1;
           return await getUserSession(
-            request,
+            event,
             issuer,
             clientId,
             clientSecret,
@@ -118,71 +115,73 @@ export const getUserSession: GetUserSessionFn = async (
     }
   } catch (err) {
     log("returning without user info");
-    request.locals.accessToken = "";
-    request.locals.refreshToken = "";
-    request.locals.userid = "";
-    request.locals.user = null;
+    event.locals.accessToken = "";
+    event.locals.refreshToken = "";
+    event.locals.userid = "";
+    event.locals.user = null;
     if (err?.error) {
-      request.locals.authError.error = err.error;
+      event.locals.authError.error = err.error;
     }
     if (err?.errorDescription) {
-      request.locals.authError.errorDescription = err.errorDescription;
+      event.locals.authError.errorDescription = err.errorDescription;
     }
     return {
       user: null,
       accessToken: null,
       refreshToken: null,
       userid: null,
-      error: request.locals.authError?.error ? request.locals.authError : null,
+      error: event.locals.authError?.error ? event.locals.authError : null,
       authServerOnline: err.error !== "auth_server_conn_error" ? true : false,
     };
   }
 };
 
 export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (
-  request: ServerRequest<Locals>
+  event: RequestEvent<Locals>
 ) {
-  const cookies = request.headers.cookie
-    ? parseCookie(request.headers.cookie || "")
+  const { request } = event;
+  const cookies = request.headers.get("cookie")
+    ? parseCookie(request.headers.get("cookie") || "")
     : null;
 
   const userInfo = cookies?.["userInfo"]
     ? JSON.parse(cookies?.["userInfo"])
     : {};
 
-  request.locals.retries = 0;
-  request.locals.authError = {
+  event.locals.retries = 0;
+  event.locals.authError = {
     error: null,
     errorDescription: null,
   };
 
-  populateRequestLocals(request, "userid", userInfo, "");
-  populateRequestLocals(request, "accessToken", userInfo, null);
-  populateRequestLocals(request, "refreshToken", userInfo, null);
+  populateRequestLocals(event, "userid", userInfo, "");
+  populateRequestLocals(event, "accessToken", userInfo, null);
+  populateRequestLocals(event, "refreshToken", userInfo, null);
 
   // Parsing user object
-  const userJsonParseFailed = parseUser(request, userInfo);
-  const tokenExpired = isTokenExpired(request.locals.accessToken);
-  const beforeAccessToken = request.locals.accessToken;
+  const userJsonParseFailed = parseUser(event, userInfo);
+  const tokenExpired = isTokenExpired(event.locals.accessToken);
+  const beforeAccessToken = event.locals.accessToken;
 
-  request = { ...request, ...(yield) };
+  event = { ...event, ...(yield) };
 
-  let response: ServerResponse = { status: 200, headers: {} };
-  const afterAccessToken = request.locals.accessToken;
+  const response = { status: 200, headers: {} };
+  const afterAccessToken = event.locals.accessToken;
 
   if (isAuthInfoInvalid(request.headers) || tokenExpired) {
-    response = populateResponseHeaders(request, response);
+    populateResponseHeaders(event, response);
   }
 
   if (
     isAuthInfoInvalid(userInfo) ||
-    (request.locals?.user && userJsonParseFailed) ||
+    (event.locals?.user && userJsonParseFailed) ||
     tokenExpired ||
     beforeAccessToken !== afterAccessToken
   ) {
     // set a cookie so that we recognize future requests
-    response = injectCookies(request, response);
+    injectCookies(event, response);
   }
 
+  log("returning response with injected cookies");
   return response;
 };

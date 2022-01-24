@@ -1,31 +1,33 @@
-import type { Locals } from "../../../types";
-import type { RequestHandler } from "@sveltejs/kit";
+import type { RequestEvent } from "@sveltejs/kit";
 import { renewWeb3AuthToken } from "../../auth-api";
 import { parseCookie } from "../../cookie";
 import { setRequestLocalsFromNewTokens } from "../../server-utils";
+import debug from "debug";
 
-export const post =
-  (clientSecret, issuer): RequestHandler<Locals, FormData> =>
-  async (request) => {
-    const clientId = (request.body as any).clientId;
-    const cookie: any = parseCookie(request.headers.cookie);
-    const { userInfo } = cookie;
-    const user = JSON.parse(userInfo);
+const log = debug("sveltekit-web3auth:/auth/refresh-token");
 
-    const auth = await renewWeb3AuthToken(
-      user.refreshToken,
-      issuer,
-      clientId,
-      clientSecret
-    );
+export const post = (clientSecret, issuer) => async (event: RequestEvent) => {
+  const { request } = event;
+  const body: any = await request.json();
+  const clientId = body.clientId;
+  const cookie: any = parseCookie(request.headers.get("cookie"));
+  const { userInfo } = cookie;
+  const user = JSON.parse(userInfo);
 
-    setRequestLocalsFromNewTokens(request, auth);
+  const auth = await renewWeb3AuthToken(
+    user.refreshToken,
+    issuer,
+    clientId,
+    clientSecret
+  );
 
-    const response = {
-      body: {
-        ...auth,
-      },
-    };
+  setRequestLocalsFromNewTokens(event, auth);
 
-    return response;
+  const response = {
+    body: {
+      ...auth,
+    },
   };
+
+  return response;
+};
