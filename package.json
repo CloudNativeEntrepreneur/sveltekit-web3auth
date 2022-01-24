@@ -13,7 +13,7 @@
     "semantic-release": "semantic-release"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "1.0.0-next.56",
+    "@sveltejs/adapter-node": "1.0.0-next.67",
     "@sveltejs/kit": "1.0.0-next.202",
     "@typescript-eslint/eslint-plugin": "5.8.0",
     "@urql/devtools": "2.0.3",
