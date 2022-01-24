@@ -1,33 +1,35 @@
 import jwtDecode from "jwt-decode";
 import type { Locals } from "../types";
-import type { ServerRequest, ServerResponse } from "@sveltejs/kit/types/hooks";
+import type { RequestEvent } from "@sveltejs/kit/types/hooks";
+import debug from "debug";
 
-export const injectCookies = (
-  request: ServerRequest<Locals>,
-  response: ServerResponse
-) => {
+const log = debug("sveltekit-web3auth:server-utils");
+
+export const injectCookies = (event: RequestEvent<Locals>, response) => {
+  log("injecting cookies");
+
   let responseCookies = {};
   let serialized_user = null;
 
   try {
-    serialized_user = JSON.stringify(request.locals.user);
+    serialized_user = JSON.stringify(event.locals.user);
   } catch {
-    request.locals.user = null;
+    event.locals.user = null;
   }
 
   responseCookies = {
-    userid: `${request.locals.userid}`,
+    userid: `${event.locals.userid}`,
     user: `${serialized_user}`,
   };
-  responseCookies["refreshToken"] = `${request.locals.refreshToken}`;
+  responseCookies["refreshToken"] = `${event.locals.refreshToken}`;
   let cookieAtrributes = "Path=/; HttpOnly;";
-  if (request.locals?.cookieAttributes) {
-    cookieAtrributes = request.locals.cookieAttributes;
+  if (event.locals?.cookieAttributes) {
+    cookieAtrributes = event.locals.cookieAttributes;
   }
+
   response.headers["set-cookie"] = `userInfo=${JSON.stringify(
     responseCookies
   )}; ${cookieAtrributes}`;
-  return response;
 };
 
 export const isAuthInfoInvalid = (obj) => {
@@ -36,19 +38,20 @@ export const isAuthInfoInvalid = (obj) => {
   return isAuthInvalid;
 };
 
-export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
+export const parseUser = (event: RequestEvent<Locals>, userInfo) => {
+  const { request } = event;
   let userJsonParseFailed = false;
   try {
-    if (request.headers?.user) {
-      request.locals.user = JSON.parse(request.headers.user);
+    if (request.headers?.get("user")) {
+      event.locals.user = JSON.parse(request.headers.get("user"));
     } else {
       if (
         userInfo?.user &&
         userInfo?.user !== "null" &&
         userInfo?.user !== "undefined"
       ) {
-        request.locals.user = JSON.parse(userInfo.user);
-        if (!request.locals.user) {
+        event.locals.user = JSON.parse(userInfo.user);
+        if (!event.locals.user) {
           userJsonParseFailed = true;
         }
       } else {
@@ -59,56 +62,58 @@ export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
     }
   } catch {
     userJsonParseFailed = true;
-    request.locals.user = null;
+    event.locals.user = null;
   }
   return userJsonParseFailed;
 };
 
 export const populateRequestLocals = (
-  request: ServerRequest<Locals>,
+  event: RequestEvent<Locals>,
   keyName: string,
   userInfo,
   defaultValue
 ) => {
-  if (request.headers[keyName]) {
-    request.locals[keyName] = request.headers[keyName];
+  const { request } = event;
+  if (request.headers.get(keyName)) {
+    event.locals[keyName] = request.headers.get(keyName);
   } else {
     if (
       userInfo[keyName] &&
       userInfo[keyName] !== "null" &&
       userInfo[keyName] !== "undefined"
     ) {
-      request.locals[keyName] = userInfo[keyName];
+      event.locals[keyName] = userInfo[keyName];
     } else {
-      request.locals[keyName] = defaultValue;
+      event.locals[keyName] = defaultValue;
     }
   }
   return request;
 };
 
 export const populateResponseHeaders = (
-  request: ServerRequest<Locals>,
-  response: ServerResponse
+  event: RequestEvent<Locals>,
+  response
 ) => {
-  if (request.locals.user) {
-    response.headers["user"] = `${JSON.stringify(request.locals.user)}`;
+  if (event.locals.user) {
+    response.headers["user"] = `${JSON.stringify(event.locals.user)}`;
   }
 
-  if (request.locals.userid) {
-    response.headers["userid"] = `${request.locals.userid}`;
+  if (event.locals.userid) {
+    response.headers["userid"] = `${event.locals.userid}`;
   }
 
-  if (request.locals.accessToken) {
-    response.headers["accessToken"] = `${request.locals.accessToken}`;
+  if (event.locals.accessToken) {
+    response.headers["accessToken"] = `${event.locals.accessToken}`;
   }
-  if (request.locals.refreshToken) {
-    response.headers["refreshToken"] = `${request.locals.refreshToken}`;
+  if (event.locals.refreshToken) {
+    response.headers["refreshToken"] = `${event.locals.refreshToken}`;
   }
-
-  return response;
 };
 
-export const setRequestLocalsFromNewTokens = (request, tokenSet) => {
+export const setRequestLocalsFromNewTokens = (
+  event: RequestEvent,
+  tokenSet: { accessToken: string; idToken: string; refreshToken: string }
+) => {
   const parsedUserInfo: any = jwtDecode(tokenSet.idToken);
   delete parsedUserInfo.aud;
   delete parsedUserInfo.exp;
@@ -118,8 +123,8 @@ export const setRequestLocalsFromNewTokens = (request, tokenSet) => {
   delete parsedUserInfo.typ;
 
   // Cookie is set based on locals value in next step
-  request.locals.userid = parsedUserInfo.address;
-  request.locals.user = parsedUserInfo;
-  request.locals.accessToken = tokenSet.accessToken;
-  request.locals.refreshToken = tokenSet.refreshToken;
+  event.locals.userid = parsedUserInfo.address;
+  event.locals.user = parsedUserInfo;
+  event.locals.accessToken = tokenSet.accessToken;
+  event.locals.refreshToken = tokenSet.refreshToken;
 };

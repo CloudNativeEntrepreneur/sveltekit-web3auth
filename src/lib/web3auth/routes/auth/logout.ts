@@ -1,33 +1,40 @@
-import type { RequestHandler } from "@sveltejs/kit";
-import type { Locals } from "../../../types";
+import type { RequestEvent } from "@sveltejs/kit";
 import { endAuthSession } from "../../auth-api";
 import { parseCookie } from "../../cookie";
+import debug from "debug";
 
-export const post =
-  (clientSecret, issuer): RequestHandler<Locals, FormData> =>
-  async (request) => {
-    const clientId = (request.body as any).clientId;
-    const cookie: any = parseCookie(request.headers.cookie);
-    const { userInfo } = cookie;
-    const user = JSON.parse(userInfo);
-    const address = user.userid;
+const log = debug("sveltekit-web3auth:/auth/logout");
 
-    const auth = await endAuthSession({
-      issuer,
-      clientId,
-      clientSecret,
-      address,
-    });
+export const post = (clientSecret, issuer) => async (event: RequestEvent) => {
+  log("logging out");
+  const { request } = event;
+  const body: any = await request.json();
+  const clientId = body.clientId;
+  const cookie: any = parseCookie(request.headers.get("cookie"));
+  const { userInfo } = cookie;
+  const user = JSON.parse(userInfo);
+  const address = user.userid;
 
-    const response = {
-      body: {},
-    };
+  log("logging out", { clientId, address });
 
-    // Cookie is set based on locals value in next step
-    request.locals.userid = null;
-    request.locals.user = null;
-    request.locals.accessToken = null;
-    request.locals.refreshToken = null;
+  const auth = await endAuthSession({
+    issuer,
+    clientId,
+    clientSecret,
+    address,
+  });
 
-    return response;
+  log("logged out", { clientId, address });
+
+  const response = {
+    body: {},
   };
+
+  // Cookie is set based on locals value in next step
+  event.locals.userid = null;
+  event.locals.user = null;
+  event.locals.accessToken = null;
+  event.locals.refreshToken = null;
+
+  return response;
+};

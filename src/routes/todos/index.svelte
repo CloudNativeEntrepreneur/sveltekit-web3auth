@@ -41,7 +41,7 @@
     return {
       subscribe: (h) => {
         return page.subscribe((p) => {
-          query = queryToObject(p.query);
+          query = queryToObject(p.url.searchParams);
           h(query[prop]);
         });
       },
@@ -117,12 +117,14 @@
     }
   `;
 
-  export async function load({ page, session, fetch }) {
+  export async function load({ url, params, session, fetch }) {
+    log("todos load...", { url, params, session });
+
     const userAddress = session?.user?.address;
     const variables = {
-      limit: parseInt(page.query.get("limit"), 10) || defaults.limit,
-      order: page.query.get("order") || "asc",
-      offset: parseInt(page.query.get("offset"), 10) || defaults.offset,
+      limit: parseInt(url.searchParams.get("limit"), 10) || defaults.limit,
+      order: url.searchParams.get("order") || "asc",
+      offset: parseInt(url.searchParams.get("offset"), 10) || defaults.offset,
     };
 
     const emptyResults = {
