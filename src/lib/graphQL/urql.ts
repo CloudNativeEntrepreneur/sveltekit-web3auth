@@ -68,8 +68,10 @@ export const graphQLClient = (options: {
     },
   };
 
-  const existingClient = graphQLClients.find((c) => c.id === id);
   const isServerSide = !browser;
+  const existingClient = isServerSide
+    ? false
+    : graphQLClients.find((c) => c.id === id);
   if (existingClient) {
     existingClient.fetchOptions = fetchOptions;
     log("found existing client", {
@@ -162,7 +164,9 @@ export const graphQLClient = (options: {
   Object.assign(client, { id });
   log("created client", { isServerSide, id });
 
-  graphQLClients.push(client);
+  if (!isServerSide) {
+    graphQLClients.push(client);
+  }
 
   return client;
 };

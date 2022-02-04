@@ -39,11 +39,7 @@ export type Web3AuthResponse = Web3AuthSuccessResponse &
   Web3AuthFailureResponse;
 
 export interface UserDetailsGeneratorFn {
-  (request: RequestEvent<Locals>): AsyncGenerator<
-    any,
-    any,
-    RequestEvent<Locals>
-  >;
+  (event: RequestEvent<Locals>): AsyncGenerator<any, any, RequestEvent<Locals>>;
 }
 export interface UserSession {
   user: any;
