@@ -22,7 +22,7 @@
     "cssnano": "5.0.16",
     "debug": "4.3.3",
     "dotenv-cli": "4.1.1",
-    "eslint": "8.7.0",
+    "eslint": "8.10.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-svelte3": "3.4.0",
     "graphql-ws": "5.5.5",
