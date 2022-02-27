@@ -6,12 +6,13 @@ import debug from "debug";
 const log = debug("sveltekit-web3auth:server-utils");
 
 export const injectCookies = (event: RequestEvent<Locals>, response) => {
-  log("injecting cookies");
-
   let responseCookies = {};
   let serialized_user = null;
 
   try {
+    if (event?.locals?.user?.username) {
+      event.locals.user.username = encodeURI(event?.locals?.user?.username);
+    }
     serialized_user = JSON.stringify(event.locals.user);
   } catch {
     event.locals.user = null;

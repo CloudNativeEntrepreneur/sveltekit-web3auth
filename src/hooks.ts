@@ -48,14 +48,8 @@ export const handle: Handle<Locals> = async ({ event, resolve }) => {
   const authResponse = (await userGen.next(event)).value;
   const { Location } = authResponse.headers;
 
-  log("response statuses", {
-    original: response.status,
-    auth: authResponse.status,
-  });
-
   // SSR Redirection
   if (authResponse.status === 302 && Location) {
-    log("REDIRECT RESPONSE");
     const redirectResponse = {
       ...response,
       status: authResponse.status,
@@ -70,22 +64,36 @@ export const handle: Handle<Locals> = async ({ event, resolve }) => {
     return new Response(body, redirectResponse);
   }
 
-  if (authResponse.headers.userid) {
-    const authedResponseBase = {
-      status: response.status,
-      statusText: response.statusText,
-      headers: {
-        user: authResponse.headers.user,
-        userid: authResponse.headers.userid,
-        accesstoken: authResponse.headers.accesstoken,
-        refreshtoken: authResponse.headers.refreshtoken,
-        "set-cookie": authResponse.headers["set-cookie"],
-        "content-type": response.headers.get("content-type"),
-        etag: response.headers.get("etag"),
-        "permissions-policy": response.headers.get("permissions-policy"),
-      },
-    };
+  if (authResponse?.headers) {
+    let authedResponseBase;
 
+    if (authResponse?.headers?.userid) {
+      authedResponseBase = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          user: authResponse.headers.user,
+          userid: authResponse.headers.userid,
+          accesstoken: authResponse.headers.accesstoken,
+          refreshtoken: authResponse.headers.refreshtoken,
+          "set-cookie": authResponse.headers["set-cookie"],
+          "content-type": response.headers.get("content-type"),
+          etag: response.headers.get("etag"),
+          "permissions-policy": response.headers.get("permissions-policy"),
+        },
+      };
+    } else if (authResponse.headers["set-cookie"]) {
+      authedResponseBase = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          "set-cookie": authResponse.headers["set-cookie"],
+          "content-type": response.headers.get("content-type"),
+          etag: response.headers.get("etag"),
+          "permissions-policy": response.headers.get("permissions-policy"),
+        },
+      };
+    }
     return new Response(body, authedResponseBase);
   }
 

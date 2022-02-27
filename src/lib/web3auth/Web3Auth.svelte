@@ -131,7 +131,7 @@
         users = await usersWithAddressResponse.json();
       }
 
-      if (users.length) {
+      if (users?.length) {
         user = users[0];
       } else {
         user = await handleSignup(clientId)(address);
@@ -439,7 +439,7 @@
               `Welcome ${userInfo?.username || "user"}. Refresh page!`
             );
             if (answer) {
-              window.location.assign($page.path);
+              window.location.assign($page.url.pathname);
             }
           }
         } catch (err) {
