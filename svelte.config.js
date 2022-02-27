@@ -12,8 +12,6 @@ const config = {
   ],
   kit: {
     adapter: node(),
-    // hydrate the <div id="svelte"> element in src/app.html
-    target: "#svelte",
     package: {
       dir: "sveltekit-web3auth",
     },
