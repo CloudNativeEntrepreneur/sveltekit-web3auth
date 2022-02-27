@@ -7,10 +7,8 @@ import {
   fetchExchange,
 } from "@urql/svelte";
 import { accessToken } from "../web3auth/Web3Auth.svelte";
-import { devtoolsExchange } from "@urql/devtools";
 import { browser } from "$app/env";
 import debug from "debug";
-import { get } from "svelte/store";
 import { createClient as createGQLClient } from "graphql-ws";
 
 const log = debug("sveltekit-web3auth:lib/graphQL/urql");
@@ -52,9 +50,22 @@ export const graphQLClient = (options: {
   };
   fetch;
   ws;
+  clientSideCacheMode?: string;
+  serverSideCacheMode?: string;
 }) => {
-  log("gql client init/restart", { restartRequired });
   const { id, session, graphql, fetch, ws } = options;
+  let { clientSideCacheMode, serverSideCacheMode } = options;
+  const isServerSide = !browser;
+
+  clientSideCacheMode = clientSideCacheMode || "network-only";
+  serverSideCacheMode = serverSideCacheMode || "network-only";
+  log("gql client init/restart", {
+    restartRequired,
+    id,
+    clientSideCacheMode,
+    serverSideCacheMode,
+    isServerSide,
+  });
 
   const sessionAccessToken = currentAccessToken || session.accessToken;
 
@@ -68,7 +79,6 @@ export const graphQLClient = (options: {
     },
   };
 
-  const isServerSide = !browser;
   const existingClient = isServerSide
     ? false
     : graphQLClients.find((c) => c.id === id);
@@ -111,16 +121,9 @@ export const graphQLClient = (options: {
     initialState: !isServerSide ? (window as any).__URQL_DATA__ : undefined,
   });
 
-  const serverExchanges = [
-    devtoolsExchange,
-    dedupExchange,
-    cacheExchange,
-    ssr,
-    fetchExchange,
-  ];
+  const serverExchanges = [dedupExchange, cacheExchange, ssr, fetchExchange];
 
   const clientExchanges = [
-    devtoolsExchange,
     dedupExchange,
     cacheExchange,
     ssr,
@@ -145,7 +148,7 @@ export const graphQLClient = (options: {
     fetchOptions,
     fetch,
     exchanges: serverExchanges,
-    requestPolicy: "network-only",
+    requestPolicy: serverSideCacheMode,
   };
 
   const clientConfig = {
@@ -154,7 +157,7 @@ export const graphQLClient = (options: {
     fetchOptions,
     fetch,
     exchanges: clientExchanges,
-    requestPolicy: "cache-and-network",
+    requestPolicy: clientSideCacheMode,
   };
 
   const client = isServerSide
@@ -162,7 +165,7 @@ export const graphQLClient = (options: {
     : createClient(clientConfig as any);
 
   Object.assign(client, { id });
-  log("created client", { isServerSide, id });
+  log("created client", { isServerSide, id, cacheMode: client.requestPolicy });
 
   if (!isServerSide) {
     graphQLClients.push(client);
