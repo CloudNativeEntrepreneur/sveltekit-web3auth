@@ -50,16 +50,22 @@ export const graphQLClient = (options: {
   };
   fetch;
   ws;
-  clientSideCacheMode?: string,
-  serverSideCacheMode?: string
+  clientSideCacheMode?: string;
+  serverSideCacheMode?: string;
 }) => {
   const { id, session, graphql, fetch, ws } = options;
   let { clientSideCacheMode, serverSideCacheMode } = options;
   const isServerSide = !browser;
-  
-  clientSideCacheMode = clientSideCacheMode || "network-only"
-  serverSideCacheMode = serverSideCacheMode || "network-only"
-  log("gql client init/restart", { restartRequired, id, clientSideCacheMode, serverSideCacheMode, isServerSide });
+
+  clientSideCacheMode = clientSideCacheMode || "network-only";
+  serverSideCacheMode = serverSideCacheMode || "network-only";
+  log("gql client init/restart", {
+    restartRequired,
+    id,
+    clientSideCacheMode,
+    serverSideCacheMode,
+    isServerSide,
+  });
 
   const sessionAccessToken = currentAccessToken || session.accessToken;
 
@@ -115,12 +121,7 @@ export const graphQLClient = (options: {
     initialState: !isServerSide ? (window as any).__URQL_DATA__ : undefined,
   });
 
-  const serverExchanges = [
-    dedupExchange,
-    cacheExchange,
-    ssr,
-    fetchExchange,
-  ];
+  const serverExchanges = [dedupExchange, cacheExchange, ssr, fetchExchange];
 
   const clientExchanges = [
     dedupExchange,
