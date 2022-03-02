@@ -22,7 +22,7 @@
     "debug": "4.3.3",
     "dotenv-cli": "5.0.0",
     "eslint": "8.10.0",
-    "eslint-config-prettier": "8.4.0",
+    "eslint-config-prettier": "8.5.0",
     "eslint-plugin-svelte3": "3.4.1",
     "graphql-ws": "5.6.2",
     "jwt-decode": "3.1.2",
