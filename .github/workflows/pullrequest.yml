@@ -8,13 +8,13 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  quality:
 
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [16.x, 17.x]
+        node-version: [18.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
