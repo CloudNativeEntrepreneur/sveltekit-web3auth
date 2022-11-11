@@ -37,6 +37,7 @@ export const handle: Handle<Locals> = async ({ event, resolve }) => {
 
   // response is the page sveltekit route that was rendered, we're
   // intercepting it and adding headers on the way out
+  // Handle resolve
   const response = await resolve(event);
 
   if (response?.status === 404) {

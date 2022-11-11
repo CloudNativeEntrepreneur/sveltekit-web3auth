@@ -493,9 +493,6 @@
 
   onMount(handleMount);
 
-  // TODO: this breaks when packaged
-  // -----
-
   if (browser) {
     onDestroy(() => {
       if (currentSilentRefreshTimeout) {
